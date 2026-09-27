@@ -11,7 +11,7 @@ import type { Post } from "../../types";
 export default function PostDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { isLoading: authLoading, user } = useAuth();
+  const { isLoading: authLoading } = useAuth();
   const postId = params.id as string;
 
   const [post, setPost] = useState<Post | null>(null);
@@ -86,6 +86,19 @@ export default function PostDetailPage() {
           {post.status} · {new Date(post.createdAt).toLocaleDateString()}
         </p>
         <p className="mt-4 whitespace-pre-wrap text-gray-700">{post.content}</p>
+
+        {post.tags && post.tags.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {post.tags.map((tag) => (
+              <span
+                key={tag.id}
+                className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
+              >
+                {tag.name}
+              </span>
+            ))}
+          </div>
+        )}
       </article>
 
       <section className="mt-8">

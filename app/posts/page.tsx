@@ -51,7 +51,15 @@ export default function PostsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">Posts</h1>
+      <div className="mb-6 flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-gray-900">Posts</h1>
+        <Link
+          href="/posts/new"
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          + New Post
+        </Link>
+      </div>
 
       {posts.length === 0 ? (
         <p className="text-gray-500">No posts yet.</p>

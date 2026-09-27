@@ -5,10 +5,11 @@ import { useRouter } from "next/navigation";
 import { createPostSchema, type CreatePostInput } from "../../lib/validation";
 import { createPost } from "../../lib/posts";
 import { getAccessToken } from "../../lib/auth";
+import { createTag, attachTagsToPost } from "../../lib/tags";
 
 export default function NewPostPage() {
   const router = useRouter();
-
+  const [tagsInput, setTagsInput] = useState("");
   const [formData, setFormData] = useState<CreatePostInput>({
     title: "",
     content: "",
@@ -53,6 +54,27 @@ export default function NewPostPage() {
     setIsSubmitting(true);
     try {
       const post = await createPost(result.data, token);
+
+      // Comma-separated tags लाई process गर्ने — post सफल भएपछि मात्र
+      if (tagsInput.trim()) {
+        const tagNames = tagsInput
+          .split(",")
+          .map((t) => t.trim())
+          .filter(Boolean);
+        const tagIds: string[] = [];
+        for (const name of tagNames) {
+          try {
+            const tag = await createTag(name, token);
+            tagIds.push(tag.id);
+          } catch {
+            // Tag पहिल्यै existing छ भने (409), silently skip गर्ने
+          }
+        }
+        if (tagIds.length > 0) {
+          await attachTagsToPost(post.id, tagIds, token);
+        }
+      }
+
       router.push(`/posts/${post.id}`);
     } catch (err) {
       setServerError(
@@ -110,6 +132,23 @@ export default function NewPostPage() {
           {errors.content && (
             <p className="mt-1 text-sm text-red-600">{errors.content}</p>
           )}
+        </div>
+
+        <div>
+          <label
+            htmlFor="tags"
+            className="block text-sm font-medium text-gray-700"
+          >
+            Tags (comma-separated, optional)
+          </label>
+          <input
+            id="tags"
+            type="text"
+            value={tagsInput}
+            onChange={(e) => setTagsInput(e.target.value)}
+            placeholder="javascript, tutorial, react"
+            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          />
         </div>
 
         <div className="flex gap-3">
