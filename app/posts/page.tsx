@@ -7,6 +7,8 @@ import { fetchPosts } from "../lib/posts";
 import { getAccessToken } from "../lib/auth";
 import type { Post } from "../types";
 import Link from "next/link";
+import Card from "../components/ui/Card";
+import Button from "../components/ui/Button";
 
 export default function PostsPage() {
   const router = useRouter();
@@ -17,7 +19,7 @@ export default function PostsPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (authLoading) return; // AuthContext ले पहिले load हुने कुर्नुहोस्
+    if (authLoading) return;
 
     const token = getAccessToken();
     if (!token) {
@@ -53,11 +55,8 @@ export default function PostsPage() {
     <main className="mx-auto max-w-3xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Posts</h1>
-        <Link
-          href="/posts/new"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + New Post
+        <Link href="/posts/new">
+          <Button>+ New Post</Button>
         </Link>
       </div>
 
@@ -66,17 +65,22 @@ export default function PostsPage() {
       ) : (
         <ul className="space-y-4">
           {posts.map((post) => (
-            <li key={post.id} className="rounded-lg border border-gray-200 p-4">
-              <Link
-                href={`/posts/${post.id}`}
-                className="text-lg font-semibold text-blue-600 hover:underline"
-              >
-                {post.title}
-              </Link>
-              <p className="mt-1 text-sm text-gray-500">
-                {post.status} · {new Date(post.createdAt).toLocaleDateString()}
-              </p>
-              <p className="mt-2 text-gray-700 line-clamp-2">{post.content}</p>
+            <li key={post.id}>
+              <Card>
+                <Link
+                  href={`/posts/${post.id}`}
+                  className="text-lg font-semibold text-blue-600 hover:underline"
+                >
+                  {post.title}
+                </Link>
+                <p className="mt-1 text-sm text-gray-500">
+                  {post.status} ·{" "}
+                  {new Date(post.createdAt).toLocaleDateString()}
+                </p>
+                <p className="mt-2 text-gray-700 line-clamp-2">
+                  {post.content}
+                </p>
+              </Card>
             </li>
           ))}
         </ul>

@@ -7,6 +7,10 @@ import { fetchPostById } from "../../lib/posts";
 import { fetchComments, createComment, type Comment } from "../../lib/comments";
 import { getAccessToken } from "../../lib/auth";
 import type { Post } from "../../types";
+import Button from "../../components/ui/Button";
+import Textarea from "../../components/ui/Textarea";
+import Card from "../../components/ui/Card";
+import Badge from "../../components/ui/Badge";
 
 export default function PostDetailPage() {
   const params = useParams();
@@ -90,12 +94,7 @@ export default function PostDetailPage() {
         {post.tags && post.tags.length > 0 && (
           <div className="mt-4 flex flex-wrap gap-2">
             {post.tags.map((tag) => (
-              <span
-                key={tag.id}
-                className="rounded-full bg-blue-50 px-3 py-1 text-xs font-medium text-blue-700"
-              >
-                {tag.name}
-              </span>
+              <Badge key={tag.id}>{tag.name}</Badge>
             ))}
           </div>
         )}
@@ -107,32 +106,30 @@ export default function PostDetailPage() {
         </h2>
 
         <form onSubmit={handleCommentSubmit} className="mt-4">
-          <textarea
+          <Textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment..."
             rows={3}
-            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
           />
-          <button
+          <Button
             type="submit"
             disabled={isSubmittingComment || !newComment.trim()}
-            className="mt-2 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2"
           >
             {isSubmittingComment ? "Posting..." : "Post Comment"}
-          </button>
+          </Button>
         </form>
 
         <ul className="mt-6 space-y-4">
           {comments.map((comment) => (
-            <li
-              key={comment.id}
-              className="rounded-md border border-gray-200 p-3"
-            >
-              <p className="text-sm text-gray-700">{comment.content}</p>
-              <p className="mt-1 text-xs text-gray-400">
-                {new Date(comment.createdAt).toLocaleString()}
-              </p>
+            <li key={comment.id}>
+              <Card>
+                <p className="text-sm text-gray-700">{comment.content}</p>
+                <p className="mt-1 text-xs text-gray-400">
+                  {new Date(comment.createdAt).toLocaleString()}
+                </p>
+              </Card>
             </li>
           ))}
         </ul>

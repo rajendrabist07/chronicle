@@ -6,6 +6,10 @@ import { createPostSchema, type CreatePostInput } from "../../lib/validation";
 import { createPost } from "../../lib/posts";
 import { getAccessToken } from "../../lib/auth";
 import { createTag, attachTagsToPost } from "../../lib/tags";
+import Button from "../../components/ui/Button";
+import Input from "../../components/ui/Input";
+import Textarea from "../../components/ui/Textarea";
+import ErrorAlert from "../../components/ui/ErrorAlert";
 
 export default function NewPostPage() {
   const router = useRouter();
@@ -55,7 +59,6 @@ export default function NewPostPage() {
     try {
       const post = await createPost(result.data, token);
 
-      // Comma-separated tags लाई process गर्ने — post सफल भएपछि मात्र
       if (tagsInput.trim()) {
         const tagNames = tagsInput
           .split(",")
@@ -67,7 +70,7 @@ export default function NewPostPage() {
             const tag = await createTag(name, token);
             tagIds.push(tag.id);
           } catch {
-            // Tag पहिल्यै existing छ भने (409), silently skip गर्ने
+            // Tag पहिल्यै existing छ भने, silently skip
           }
         }
         if (tagIds.length > 0) {
@@ -89,85 +92,54 @@ export default function NewPostPage() {
     <main className="mx-auto max-w-2xl px-4 py-8">
       <h1 className="mb-6 text-2xl font-bold text-gray-900">New Post</h1>
 
-      {serverError && (
-        <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-          {serverError}
-        </div>
-      )}
+      {serverError && <ErrorAlert message={serverError} />}
 
       <form className="space-y-4">
-        <div>
-          <label
-            htmlFor="title"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Title
-          </label>
-          <input
-            id="title"
-            type="text"
-            value={formData.title}
-            onChange={(e) => handleChange("title", e.target.value)}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
-          {errors.title && (
-            <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-          )}
-        </div>
+        <Input
+          id="title"
+          label="Title"
+          type="text"
+          value={formData.title}
+          onChange={(e) => handleChange("title", e.target.value)}
+          error={errors.title}
+        />
 
-        <div>
-          <label
-            htmlFor="content"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Content
-          </label>
-          <textarea
-            id="content"
-            rows={10}
-            value={formData.content}
-            onChange={(e) => handleChange("content", e.target.value)}
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
-          {errors.content && (
-            <p className="mt-1 text-sm text-red-600">{errors.content}</p>
-          )}
-        </div>
+        <Textarea
+          id="content"
+          label="Content"
+          rows={10}
+          value={formData.content}
+          onChange={(e) => handleChange("content", e.target.value)}
+          error={errors.content}
+        />
 
-        <div>
-          <label
-            htmlFor="tags"
-            className="block text-sm font-medium text-gray-700"
-          >
-            Tags (comma-separated, optional)
-          </label>
-          <input
-            id="tags"
-            type="text"
-            value={tagsInput}
-            onChange={(e) => setTagsInput(e.target.value)}
-            placeholder="javascript, tutorial, react"
-            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-          />
-        </div>
+        <Input
+          id="tags"
+          label="Tags (comma-separated, optional)"
+          type="text"
+          value={tagsInput}
+          onChange={(e) => setTagsInput(e.target.value)}
+          placeholder="javascript, tutorial, react"
+        />
 
         <div className="flex gap-3">
-          <button
+          <Button
             type="button"
+            variant="secondary"
             disabled={isSubmitting}
             onClick={(e) => handleSubmit(e, "DRAFT")}
-            className="flex-1 rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex-1"
           >
             {isSubmitting ? "Saving..." : "Save as Draft"}
-          </button>
-          <button
+          </Button>
+          <Button
             type="button"
             disabled={isSubmitting}
             onClick={(e) => handleSubmit(e, "PUBLISHED")}
-            className="flex-1 rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="flex-1"
           >
             {isSubmitting ? "Publishing..." : "Publish"}
-          </button>
+          </Button>
         </div>
       </form>
     </main>

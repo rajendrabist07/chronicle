@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { registerSchema, type RegisterInput } from "../lib/validation";
 import { register, saveTokens } from "../lib/auth";
 import { useAuth } from "../context/AuthContext";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import ErrorAlert from "../components/ui/ErrorAlert";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -24,7 +27,6 @@ export default function RegisterPage() {
 
   function handleChange(field: keyof RegisterInput, value: string) {
     setFormData((prev) => ({ ...prev, [field]: value }));
-
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
@@ -65,99 +67,49 @@ export default function RegisterPage() {
           Create an account
         </h1>
 
-        {serverError && (
-          <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-            {serverError}
-          </div>
-        )}
+        {serverError && <ErrorAlert message={serverError} />}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Name
-            </label>
-            <input
-              id="name"
-              type="text"
-              value={formData.name}
-              onChange={(e) => handleChange("name", e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            />
-            {errors.name && (
-              <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-            )}
-          </div>
+          <Input
+            id="name"
+            label="Name"
+            type="text"
+            value={formData.name}
+            onChange={(e) => handleChange("name", e.target.value)}
+            error={errors.name}
+          />
 
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange("email", e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-            )}
-          </div>
+          <Input
+            id="email"
+            label="Email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => handleChange("email", e.target.value)}
+            error={errors.email}
+          />
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => handleChange("password", e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-            )}
-          </div>
+          <Input
+            id="password"
+            label="Password"
+            type="password"
+            value={formData.password}
+            onChange={(e) => handleChange("password", e.target.value)}
+            error={errors.password}
+          />
 
-          <div>
-            <label
-              htmlFor="organizationName"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Organization / Company Name
-            </label>
-            <input
-              id="organizationName"
-              type="text"
-              value={formData.organizationName}
-              onChange={(e) => handleChange("organizationName", e.target.value)}
-              placeholder="e.g. Acme Inc"
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            />
-            {errors.organizationName && (
-              <p className="mt-1 text-sm text-red-600">
-                {errors.organizationName}
-              </p>
-            )}
-          </div>
+          <Input
+            id="organizationName"
+            label="Organization / Company Name"
+            type="text"
+            value={formData.organizationName}
+            onChange={(e) => handleChange("organizationName", e.target.value)}
+            placeholder="e.g. Acme Inc"
+            error={errors.organizationName}
+          />
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Creating account..." : "Register"}
-          </button>
+          </Button>
         </form>
       </div>
     </main>

@@ -5,6 +5,9 @@ import { useRouter } from "next/navigation";
 import { loginSchema, type LoginInput } from "../lib/validation";
 import { login, saveTokens } from "../lib/auth";
 import { useAuth } from "../context/AuthContext";
+import Button from "../components/ui/Button";
+import Input from "../components/ui/Input";
+import ErrorAlert from "../components/ui/ErrorAlert";
 import Link from "next/link";
 
 export default function LoginPage() {
@@ -59,58 +62,30 @@ export default function LoginPage() {
       <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-md">
         <h1 className="mb-6 text-2xl font-bold text-gray-900">Log in</h1>
 
-        {serverError && (
-          <div className="mb-4 rounded-md bg-red-50 px-4 py-3 text-sm text-red-700">
-            {serverError}
-          </div>
-        )}
+        {serverError && <ErrorAlert message={serverError} />}
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="email"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              value={formData.email}
-              onChange={(e) => handleChange("email", e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            />
-            {errors.email && (
-              <p className="mt-1 text-sm text-red-600">{errors.email}</p>
-            )}
-          </div>
+          <Input
+            id="email"
+            label="Email"
+            type="email"
+            value={formData.email}
+            onChange={(e) => handleChange("email", e.target.value)}
+            error={errors.email}
+          />
 
-          <div>
-            <label
-              htmlFor="password"
-              className="block text-sm font-medium text-gray-700"
-            >
-              Password
-            </label>
-            <input
-              id="password"
-              type="password"
-              value={formData.password}
-              onChange={(e) => handleChange("password", e.target.value)}
-              className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
-            />
-            {errors.password && (
-              <p className="mt-1 text-sm text-red-600">{errors.password}</p>
-            )}
-          </div>
+          <Input
+            id="password"
+            label="Password"
+            type="password"
+            value={formData.password}
+            onChange={(e) => handleChange("password", e.target.value)}
+            error={errors.password}
+          />
 
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
+          <Button type="submit" disabled={isSubmitting} className="w-full">
             {isSubmitting ? "Logging in..." : "Log in"}
-          </button>
+          </Button>
         </form>
 
         <p className="mt-4 text-center text-sm text-gray-600">
