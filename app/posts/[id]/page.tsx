@@ -3,7 +3,12 @@
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
-import { fetchPostById, updatePost, deletePost } from "../../lib/posts";
+import {
+  fetchPostById,
+  updatePost,
+  deletePost,
+  publishPost,
+} from "../../lib/posts";
 import { fetchComments, createComment, type Comment } from "../../lib/comments";
 import { getAccessToken } from "../../lib/auth";
 import type { Post } from "../../types";
@@ -32,6 +37,7 @@ export default function PostDetailPage() {
   const [editContent, setEditContent] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -122,6 +128,24 @@ export default function PostDetailPage() {
     }
   }
 
+  async function handlePublish() {
+    const token = getAccessToken();
+    if (!token || !post) return;
+
+    setIsPublishing(true);
+    setActionError(null);
+    try {
+      const updated = await publishPost(post.id, token);
+      setPost(updated);
+    } catch (err) {
+      setActionError(
+        err instanceof Error ? err.message : "Failed to publish post",
+      );
+    } finally {
+      setIsPublishing(false);
+    }
+  }
+
   if (authLoading || isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -181,6 +205,11 @@ export default function PostDetailPage() {
               <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
               {canModify && (
                 <div className="flex gap-2">
+                  {post.status === "DRAFT" && (
+                    <Button onClick={handlePublish} disabled={isPublishing}>
+                      {isPublishing ? "Publishing..." : "Publish"}
+                    </Button>
+                  )}
                   <Button
                     variant="secondary"
                     onClick={() => setIsEditing(true)}

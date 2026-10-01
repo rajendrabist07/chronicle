@@ -11,7 +11,7 @@ export async function fetchPosts(token: string, page = 1, limit = 10) {
 }
 
 export async function fetchPostById(id: string, token: string) {
-    const res = await apiFetch<import('../types').ApiSuccessResponse<Post>>(`/posts/${id}`, { token });
+    const res = await apiFetch<ApiSuccessResponse<Post>>(`/posts/${id}`, { token });
     return res.data;
 }
 
@@ -44,4 +44,10 @@ export async function deletePost(id: string, token: string) {
     });
 }
 
-
+export async function publishPost(id: string, token: string) {
+    const res = await apiFetch<ApiSuccessResponse<Post>>(`/posts/${id}/publish`, {
+        method: 'PATCH',
+        token,
+    });
+    return res.data;
+}
