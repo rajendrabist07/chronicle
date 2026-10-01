@@ -20,3 +20,23 @@ export async function createPost(input: CreatePostInput, token: string) {
     });
     return res.data;
 }
+
+export async function updatePost(
+    id: string,
+    input: { title?: string; content?: string },
+    token: string
+) {
+    const res = await apiFetch<ApiSuccessResponse<Post>>(`/posts/${id}`, {
+        method: 'PATCH',
+        body: JSON.stringify(input),
+        token,
+    });
+    return res.data;
+}
+
+export async function deletePost(id: string, token: string) {
+    await apiFetch<void>(`/posts/${id}`, {
+        method: 'DELETE',
+        token,
+    });
+}
