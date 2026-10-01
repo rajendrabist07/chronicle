@@ -31,3 +31,22 @@ export function clearTokens() {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
 }
+
+export async function refreshAccessToken(refreshToken: string): Promise<string> {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+    });
+
+    if (!res.ok) {
+        throw new Error('Refresh failed');
+    }
+
+    const data = await res.json();
+    return data.data.accessToken;
+}
+
+export function getRefreshToken(): string | null {
+    return localStorage.getItem('refreshToken');
+}
