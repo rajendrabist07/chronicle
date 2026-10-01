@@ -9,7 +9,13 @@ import {
   deletePost,
   publishPost,
 } from "../../lib/posts";
-import { fetchComments, createComment, type Comment } from "../../lib/comments";
+import {
+  fetchComments,
+  createComment,
+  updateComment,
+  deleteComment,
+  type Comment,
+} from "../../lib/comments";
 import { getAccessToken } from "../../lib/auth";
 import type { Post } from "../../types";
 import Button from "../../components/ui/Button";
@@ -39,6 +45,14 @@ export default function PostDetailPage() {
   const [isDeleting, setIsDeleting] = useState(false);
   const [isPublishing, setIsPublishing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+
+  // Comment edit state — ek pataka ma ek matra comment edit mode ma huncha
+  const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
+  const [editCommentText, setEditCommentText] = useState("");
+  const [isSavingComment, setIsSavingComment] = useState(false);
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(
+    null,
+  );
 
   useEffect(() => {
     if (authLoading) return;
@@ -143,6 +157,58 @@ export default function PostDetailPage() {
       );
     } finally {
       setIsPublishing(false);
+    }
+  }
+
+  function startEditComment(comment: Comment) {
+    setEditingCommentId(comment.id);
+    setEditCommentText(comment.content);
+  }
+
+  function cancelEditComment() {
+    setEditingCommentId(null);
+    setEditCommentText("");
+  }
+
+  async function handleSaveCommentEdit(commentId: string) {
+    const token = getAccessToken();
+    if (!token || !editCommentText.trim()) return;
+
+    setIsSavingComment(true);
+    try {
+      const updated = await updateComment(
+        postId,
+        commentId,
+        editCommentText,
+        token,
+      );
+      setComments((prev) =>
+        prev.map((c) => (c.id === commentId ? updated : c)),
+      );
+      setEditingCommentId(null);
+      setEditCommentText("");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update comment");
+    } finally {
+      setIsSavingComment(false);
+    }
+  }
+
+  async function handleDeleteComment(commentId: string) {
+    const token = getAccessToken();
+    if (!token) return;
+
+    const confirmed = window.confirm("Delete this comment?");
+    if (!confirmed) return;
+
+    setDeletingCommentId(commentId);
+    try {
+      await deleteComment(postId, commentId, token);
+      setComments((prev) => prev.filter((c) => c.id !== commentId));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to delete comment");
+    } finally {
+      setDeletingCommentId(null);
     }
   }
 
@@ -266,16 +332,72 @@ export default function PostDetailPage() {
         </form>
 
         <ul className="mt-6 space-y-4">
-          {comments.map((comment) => (
-            <li key={comment.id}>
-              <Card>
-                <p className="text-sm text-gray-700">{comment.content}</p>
-                <p className="mt-1 text-xs text-gray-400">
-                  {new Date(comment.createdAt).toLocaleString()}
-                </p>
-              </Card>
-            </li>
-          ))}
+          {comments.map((comment) => {
+            const canModifyComment =
+              comment.authorId === user?.id || isPrivileged;
+            const isEditingThis = editingCommentId === comment.id;
+
+            return (
+              <li key={comment.id}>
+                <Card>
+                  {isEditingThis ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        value={editCommentText}
+                        onChange={(e) => setEditCommentText(e.target.value)}
+                        rows={3}
+                      />
+                      <div className="flex gap-2">
+                        <Button
+                          onClick={() => handleSaveCommentEdit(comment.id)}
+                          disabled={isSavingComment || !editCommentText.trim()}
+                        >
+                          {isSavingComment ? "Saving..." : "Save"}
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={cancelEditComment}
+                          disabled={isSavingComment}
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm text-gray-700">
+                          {comment.content}
+                        </p>
+                        {canModifyComment && (
+                          <div className="flex shrink-0 gap-2">
+                            <button
+                              onClick={() => startEditComment(comment)}
+                              className="text-xs text-blue-600 hover:underline"
+                            >
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDeleteComment(comment.id)}
+                              disabled={deletingCommentId === comment.id}
+                              className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                            >
+                              {deletingCommentId === comment.id
+                                ? "Deleting..."
+                                : "Delete"}
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-1 text-xs text-gray-400">
+                        {new Date(comment.createdAt).toLocaleString()}
+                      </p>
+                    </>
+                  )}
+                </Card>
+              </li>
+            );
+          })}
         </ul>
       </section>
     </main>

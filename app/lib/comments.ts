@@ -29,3 +29,27 @@ export async function createComment(
     });
     return res.data;
 }
+
+export async function updateComment(
+    postId: string,
+    commentId: string,
+    content: string,
+    token: string
+) {
+    const res = await apiFetch<ApiSuccessResponse<Comment>>(
+        `/posts/${postId}/comments/${commentId}`,
+        {
+            method: 'PATCH',
+            body: JSON.stringify({ content }),
+            token,
+        },
+    );
+    return res.data;
+}
+
+export async function deleteComment(postId: string, commentId: string, token: string) {
+    await apiFetch<void>(`/posts/${postId}/comments/${commentId}`, {
+        method: 'DELETE',
+        token,
+    });
+}
