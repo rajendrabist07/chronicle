@@ -31,7 +31,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    setIsLoading(false);
+    apiFetch<{ success: true; data: User }>("/auth/me", { token })
+      .then((res) => setUser(res.data))
+      .catch(() => clearTokens())
+      .finally(() => setIsLoading(false));
   }, []);
 
   function logout() {
