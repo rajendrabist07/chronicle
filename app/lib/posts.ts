@@ -2,8 +2,11 @@ import { apiFetch } from './api';
 import type { Post, PaginatedResponse, ApiSuccessResponse } from '../types';
 import type { CreatePostInput } from './validation';
 
-export async function fetchPosts(token: string) {
-    const res = await apiFetch<PaginatedResponse<Post>>('/posts', { token });
+export async function fetchPosts(token: string, page = 1, limit = 10) {
+    const res = await apiFetch<PaginatedResponse<Post>>(
+        `/posts?page=${page}&limit=${limit}`,
+        { token },
+    );
     return res;
 }
 
@@ -40,3 +43,5 @@ export async function deletePost(id: string, token: string) {
         token,
     });
 }
+
+

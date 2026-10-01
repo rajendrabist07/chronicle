@@ -7,14 +7,14 @@ import { fetchPosts } from "../lib/posts";
 import { getAccessToken } from "../lib/auth";
 import type { Post } from "../types";
 import Link from "next/link";
-import Card from "../components/ui/Card";
-import Button from "../components/ui/Button";
 
 export default function PostsPage() {
   const router = useRouter();
   const { isLoading: authLoading } = useAuth();
 
   const [posts, setPosts] = useState<Post[]>([]);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,13 +27,17 @@ export default function PostsPage() {
       return;
     }
 
-    fetchPosts(token)
-      .then((res) => setPosts(res.data))
+    setIsLoading(true);
+    fetchPosts(token, page)
+      .then((res) => {
+        setPosts(res.data);
+        setTotalPages(res.pagination.totalPages);
+      })
       .catch((err) =>
         setError(err instanceof Error ? err.message : "Failed to load posts"),
       )
       .finally(() => setIsLoading(false));
-  }, [authLoading, router]);
+  }, [authLoading, router, page]);
 
   if (authLoading || isLoading) {
     return (
@@ -55,18 +59,24 @@ export default function PostsPage() {
     <main className="mx-auto max-w-3xl px-4 py-8">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-2xl font-bold text-gray-900">Posts</h1>
-        <Link href="/posts/new">
-          <Button>+ New Post</Button>
+        <Link
+          href="/posts/new"
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+        >
+          + New Post
         </Link>
       </div>
 
       {posts.length === 0 ? (
         <p className="text-gray-500">No posts yet.</p>
       ) : (
-        <ul className="space-y-4">
-          {posts.map((post) => (
-            <li key={post.id}>
-              <Card>
+        <>
+          <ul className="space-y-4">
+            {posts.map((post) => (
+              <li
+                key={post.id}
+                className="rounded-lg border border-gray-200 p-4"
+              >
                 <Link
                   href={`/posts/${post.id}`}
                   className="text-lg font-semibold text-blue-600 hover:underline"
@@ -80,10 +90,32 @@ export default function PostsPage() {
                 <p className="mt-2 text-gray-700 line-clamp-2">
                   {post.content}
                 </p>
-              </Card>
-            </li>
-          ))}
-        </ul>
+              </li>
+            ))}
+          </ul>
+
+          {totalPages > 1 && (
+            <div className="mt-6 flex items-center justify-center gap-4">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Previous
+              </button>
+              <span className="text-sm text-gray-600">
+                Page {page} of {totalPages}
+              </span>
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
     </main>
   );
