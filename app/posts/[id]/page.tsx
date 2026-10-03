@@ -23,6 +23,7 @@ import Input from "../../components/ui/Input";
 import Textarea from "../../components/ui/Textarea";
 import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
+import Spinner from "../../components/ui/Spinner";
 import ErrorAlert from "../../components/ui/ErrorAlert";
 
 export default function PostDetailPage() {
@@ -214,8 +215,8 @@ export default function PostDetailPage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        Loading...
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <Spinner message="Loading post... First request may take a moment while server warms up." />
       </div>
     );
   }

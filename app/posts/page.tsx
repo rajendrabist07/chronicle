@@ -7,6 +7,7 @@ import { fetchPosts } from "../lib/posts";
 import { getAccessToken } from "../lib/auth";
 import type { Post } from "../types";
 import Button from "../components/ui/Button";
+import Spinner from "../components/ui/Spinner";
 import Link from "next/link";
 
 type StatusFilter = "ALL" | "DRAFT" | "PUBLISHED";
@@ -55,8 +56,8 @@ export default function PostsPage() {
 
   if (authLoading || isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        Loading...
+      <div className="flex min-h-[calc(100vh-4rem)] items-center justify-center">
+        <Spinner message="Loading posts... First request may take a moment while server warms up." />
       </div>
     );
   }
