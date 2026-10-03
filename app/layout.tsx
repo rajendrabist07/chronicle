@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
+import { ToastProvider } from "./components/ui/Toast";
 import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import { SITE_CONFIG } from "./lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -17,8 +20,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Chronicle — Content & Publishing Platform",
-  description: "A production-grade content platform with posts, threaded comments, tags, and AI writing assistance",
+  title: {
+    template: `%s | ${SITE_CONFIG.name}`,
+    default: `${SITE_CONFIG.name} — ${SITE_CONFIG.tagline}`,
+  },
+  description: SITE_CONFIG.description,
 };
 
 const themeScript = `
@@ -51,8 +57,13 @@ export default function RootLayout({
       </head>
       <body className="flex min-h-full flex-col bg-white text-slate-900 transition-colors dark:bg-slate-950 dark:text-slate-100">
         <AuthProvider>
-          <Navbar />
-          {children}
+          <ToastProvider>
+            <Navbar />
+            <main id="main" className="flex-1">
+              {children}
+            </main>
+            <Footer />
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>
