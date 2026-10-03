@@ -2,6 +2,10 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import rehypeSanitize from "rehype-sanitize";
 import { useAuth } from "../../context/AuthContext";
 import {
   fetchPostById,
@@ -18,6 +22,10 @@ import {
 } from "../../lib/comments";
 import { getAccessToken } from "../../lib/auth";
 import type { Post } from "../../types";
+import { formatRelativeTime } from "../../lib/time";
+import { calculateReadingTime } from "../../lib/public";
+import MarkdownEditor from "../../components/editor/MarkdownEditor";
+import AIAssistantPanel from "../../components/ai/AIAssistantPanel";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
 import Textarea from "../../components/ui/Textarea";
@@ -25,11 +33,23 @@ import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
 import Spinner from "../../components/ui/Spinner";
 import ErrorAlert from "../../components/ui/ErrorAlert";
+import { useToast } from "../../components/ui/Toast";
+import {
+  ArrowLeft,
+  Calendar,
+  Clock,
+  Edit2,
+  Trash2,
+  Send,
+  User,
+  ExternalLink,
+} from "lucide-react";
 
 export default function PostDetailPage() {
   const params = useParams();
   const router = useRouter();
   const { isLoading: authLoading, user } = useAuth();
+  const { success, error: toastError, info } = useToast();
   const postId = params.id as string;
 
   const [post, setPost] = useState<Post | null>(null);
@@ -47,13 +67,11 @@ export default function PostDetailPage() {
   const [isPublishing, setIsPublishing] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
 
-  // Comment edit state — ek pataka ma ek matra comment edit mode ma huncha
+  // Comment edit state
   const [editingCommentId, setEditingCommentId] = useState<string | null>(null);
   const [editCommentText, setEditCommentText] = useState("");
   const [isSavingComment, setIsSavingComment] = useState(false);
-  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(
-    null,
-  );
+  const [deletingCommentId, setDeletingCommentId] = useState<string | null>(null);
 
   useEffect(() => {
     if (authLoading) return;
@@ -72,7 +90,7 @@ export default function PostDetailPage() {
         setComments(commentsData);
       })
       .catch((err) =>
-        setError(err instanceof Error ? err.message : "Failed to load post"),
+        setError(err instanceof Error ? err.message : "Failed to load post")
       )
       .finally(() => setIsLoading(false));
   }, [authLoading, postId, router]);
@@ -86,13 +104,14 @@ export default function PostDetailPage() {
     try {
       const comment = await createComment(
         postId,
-        { content: newComment },
-        token,
+        { content: newComment.trim() },
+        token
       );
       setComments((prev) => [comment, ...prev]);
       setNewComment("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to post comment");
+      success("Comment posted!");
+    } catch (err: any) {
+      toastError(err?.message || "Failed to post comment");
     } finally {
       setIsSubmittingComment(false);
     }
@@ -108,14 +127,15 @@ export default function PostDetailPage() {
       const updated = await updatePost(
         post.id,
         { title: editTitle, content: editContent },
-        token,
+        token
       );
       setPost(updated);
       setIsEditing(false);
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Failed to update post",
-      );
+      success("Post updated successfully!");
+    } catch (err: any) {
+      const msg = err?.message || "Failed to update post";
+      setActionError(msg);
+      toastError(msg);
     } finally {
       setIsSaving(false);
     }
@@ -125,20 +145,19 @@ export default function PostDetailPage() {
     const token = getAccessToken();
     if (!token || !post) return;
 
-    const confirmed = window.confirm(
-      "Delete this post? This cannot be undone.",
-    );
+    const confirmed = window.confirm("Delete this post? This cannot be undone.");
     if (!confirmed) return;
 
     setIsDeleting(true);
     setActionError(null);
     try {
       await deletePost(post.id, token);
+      info("Post deleted");
       router.push("/posts");
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Failed to delete post",
-      );
+    } catch (err: any) {
+      const msg = err?.message || "Failed to delete post";
+      setActionError(msg);
+      toastError(msg);
       setIsDeleting(false);
     }
   }
@@ -152,10 +171,11 @@ export default function PostDetailPage() {
     try {
       const updated = await publishPost(post.id, token);
       setPost(updated);
-    } catch (err) {
-      setActionError(
-        err instanceof Error ? err.message : "Failed to publish post",
-      );
+      success("Post published successfully!");
+    } catch (err: any) {
+      const msg = err?.message || "Failed to publish post";
+      setActionError(msg);
+      toastError(msg);
     } finally {
       setIsPublishing(false);
     }
@@ -180,16 +200,17 @@ export default function PostDetailPage() {
       const updated = await updateComment(
         postId,
         commentId,
-        editCommentText,
-        token,
+        editCommentText.trim(),
+        token
       );
       setComments((prev) =>
-        prev.map((c) => (c.id === commentId ? updated : c)),
+        prev.map((c) => (c.id === commentId ? updated : c))
       );
       setEditingCommentId(null);
       setEditCommentText("");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to update comment");
+      success("Comment updated!");
+    } catch (err: any) {
+      toastError(err?.message || "Failed to update comment");
     } finally {
       setIsSavingComment(false);
     }
@@ -206,8 +227,9 @@ export default function PostDetailPage() {
     try {
       await deleteComment(postId, commentId, token);
       setComments((prev) => prev.filter((c) => c.id !== commentId));
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to delete comment");
+      info("Comment deleted");
+    } catch (err: any) {
+      toastError(err?.message || "Failed to delete comment");
     } finally {
       setDeletingCommentId(null);
     }
@@ -223,8 +245,11 @@ export default function PostDetailPage() {
 
   if (error || !post) {
     return (
-      <div className="flex min-h-screen items-center justify-center text-red-600">
-        {error || "Post not found"}
+      <div className="mx-auto max-w-2xl px-4 py-16 text-center">
+        <p className="text-red-600 dark:text-red-400">{error || "Post not found"}</p>
+        <Link href="/posts" className="mt-4 inline-block text-sm text-blue-600 hover:underline">
+          Return to My Posts
+        </Link>
       </div>
     );
   }
@@ -232,108 +257,205 @@ export default function PostDetailPage() {
   const isAuthor = user?.id === post.authorId;
   const isPrivileged = user?.role === "ADMIN" || user?.role === "OWNER";
   const canModify = isAuthor || isPrivileged;
+  const readingTime = calculateReadingTime(post.content);
 
   return (
-    <main className="mx-auto max-w-3xl px-4 py-8">
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+      {/* Back button */}
+      <Link
+        href="/posts"
+        className="inline-flex items-center gap-1 text-xs font-medium text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 mb-6"
+      >
+        <ArrowLeft className="h-3.5 w-3.5" />
+        <span>Back to My Posts</span>
+      </Link>
+
       {actionError && <ErrorAlert message={actionError} />}
 
-      <article className="border-b border-gray-200 pb-6">
+      <article className="border-b border-slate-200 pb-8 dark:border-slate-800">
         {isEditing ? (
-          <div className="space-y-4">
-            <Input
-              id="editTitle"
-              label="Title"
-              value={editTitle}
-              onChange={(e) => setEditTitle(e.target.value)}
-            />
-            <Textarea
-              id="editContent"
-              label="Content"
-              rows={8}
-              value={editContent}
-              onChange={(e) => setEditContent(e.target.value)}
-            />
-            <div className="flex gap-3">
-              <Button onClick={handleSaveEdit} disabled={isSaving}>
-                {isSaving ? "Saving..." : "Save"}
-              </Button>
-              <Button
-                variant="secondary"
-                onClick={() => setIsEditing(false)}
-                disabled={isSaving}
-              >
-                Cancel
-              </Button>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="space-y-4 lg:col-span-2">
+              <Input
+                id="editTitle"
+                label="Title"
+                value={editTitle}
+                onChange={(e) => setEditTitle(e.target.value)}
+                required
+              />
+
+              <MarkdownEditor
+                id="editContent"
+                label="Content"
+                rows={12}
+                value={editContent}
+                onChange={(val) => setEditContent(val)}
+                draftKey={`post_${post.id}`}
+              />
+
+              <div className="flex gap-3 pt-2">
+                <Button onClick={handleSaveEdit} loading={isSaving}>
+                  Save Changes
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => {
+                    setIsEditing(false);
+                    setEditTitle(post.title);
+                    setEditContent(post.content);
+                  }}
+                  disabled={isSaving}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+
+            {/* AI Assistant in edit mode */}
+            <div className="lg:col-span-1">
+              <AIAssistantPanel
+                content={editContent}
+                onApplyTitle={(t) => setEditTitle(t)}
+                onApplyTags={() => {}}
+                onApplyContent={(c) => setEditContent(c)}
+                onAppendContent={(a) => setEditContent(`${editContent}\n\n${a}`)}
+              />
             </div>
           </div>
         ) : (
           <>
-            <div className="flex items-start justify-between">
-              <h1 className="text-3xl font-bold text-gray-900">{post.title}</h1>
+            {/* Header / Actions */}
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Badge
+                    variant={
+                      post.status === "PUBLISHED"
+                        ? "success"
+                        : post.status === "DRAFT"
+                        ? "warning"
+                        : "secondary"
+                    }
+                  >
+                    {post.status}
+                  </Badge>
+                  {post.slug && post.status === "PUBLISHED" && (
+                    <Link
+                      href={`/read/${post.slug}`}
+                      className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      <span>View Public Story</span>
+                      <ExternalLink className="h-3 w-3" />
+                    </Link>
+                  )}
+                </div>
+
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+                  {post.title}
+                </h1>
+              </div>
+
               {canModify && (
-                <div className="flex gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   {post.status === "DRAFT" && (
-                    <Button onClick={handlePublish} disabled={isPublishing}>
-                      {isPublishing ? "Publishing..." : "Publish"}
+                    <Button
+                      size="sm"
+                      onClick={handlePublish}
+                      loading={isPublishing}
+                    >
+                      <Send className="mr-1.5 h-3.5 w-3.5" />
+                      Publish
                     </Button>
                   )}
                   <Button
                     variant="secondary"
+                    size="sm"
                     onClick={() => setIsEditing(true)}
                   >
+                    <Edit2 className="mr-1.5 h-3.5 w-3.5" />
                     Edit
                   </Button>
                   <Button
                     variant="danger"
+                    size="sm"
                     onClick={handleDelete}
-                    disabled={isDeleting}
+                    loading={isDeleting}
                   >
-                    {isDeleting ? "Deleting..." : "Delete"}
+                    <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                    Delete
                   </Button>
                 </div>
               )}
             </div>
-            <p className="mt-2 text-sm text-gray-500">
-              {post.status} · {new Date(post.createdAt).toLocaleDateString()}
-              {post.authorName && ` · by ${post.authorName}`}
-            </p>
-            <p className="mt-4 whitespace-pre-wrap text-gray-700">
-              {post.content}
-            </p>
 
+            {/* Author and Date Meta */}
+            <div className="mt-4 flex flex-wrap items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
+              <span className="flex items-center gap-1">
+                <User className="h-3.5 w-3.5" />
+                {post.authorName || "Author"}
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Calendar className="h-3.5 w-3.5" />
+                {new Date(post.createdAt).toLocaleDateString()}
+              </span>
+              <span>•</span>
+              <span className="flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5" />
+                {readingTime}
+              </span>
+            </div>
+
+            {/* Tags */}
             {post.tags && post.tags.length > 0 && (
-              <div className="mt-4 flex flex-wrap gap-2">
+              <div className="mt-4 flex flex-wrap gap-1.5">
                 {post.tags.map((tag) => (
-                  <Badge key={tag.id}>{tag.name}</Badge>
+                  <Badge key={tag.id} variant="neutral">
+                    #{tag.name}
+                  </Badge>
                 ))}
               </div>
             )}
+
+            {/* Rendered Markdown Body */}
+            <div className="prose prose-slate mt-6 max-w-none dark:prose-invert prose-headings:font-bold prose-pre:bg-slate-900 text-slate-800 dark:text-slate-200">
+              <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeSanitize]}
+              >
+                {post.content}
+              </ReactMarkdown>
+            </div>
           </>
         )}
       </article>
 
+      {/* Internal Post Comments */}
       <section className="mt-8">
-        <h2 className="text-xl font-semibold text-gray-900">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-white">
           Comments ({comments.length})
         </h2>
 
-        <form onSubmit={handleCommentSubmit} className="mt-4">
+        <form onSubmit={handleCommentSubmit} className="mt-4 space-y-3">
           <Textarea
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
             placeholder="Write a comment..."
             rows={3}
           />
-          <Button
-            type="submit"
-            disabled={isSubmittingComment || !newComment.trim()}
-            className="mt-2"
-          >
-            {isSubmittingComment ? "Posting..." : "Post Comment"}
-          </Button>
+          <div className="flex justify-end">
+            <Button
+              type="submit"
+              size="sm"
+              loading={isSubmittingComment}
+              disabled={isSubmittingComment || !newComment.trim()}
+            >
+              Post Comment
+            </Button>
+          </div>
         </form>
 
-        <ul className="mt-6 space-y-4">
+        <ul className="mt-6 space-y-3">
           {comments.map((comment) => {
             const canModifyComment =
               comment.authorId === user?.id || isPrivileged;
@@ -341,9 +463,9 @@ export default function PostDetailPage() {
 
             return (
               <li key={comment.id}>
-                <Card>
+                <Card className="p-4">
                   {isEditingThis ? (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <Textarea
                         value={editCommentText}
                         onChange={(e) => setEditCommentText(e.target.value)}
@@ -351,13 +473,16 @@ export default function PostDetailPage() {
                       />
                       <div className="flex gap-2">
                         <Button
+                          size="sm"
                           onClick={() => handleSaveCommentEdit(comment.id)}
+                          loading={isSavingComment}
                           disabled={isSavingComment || !editCommentText.trim()}
                         >
-                          {isSavingComment ? "Saving..." : "Save"}
+                          Save
                         </Button>
                         <Button
                           variant="secondary"
+                          size="sm"
                           onClick={cancelEditComment}
                           disabled={isSavingComment}
                         >
@@ -370,11 +495,11 @@ export default function PostDetailPage() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           {comment.authorName && (
-                            <p className="mb-1 text-xs font-semibold text-gray-900">
+                            <p className="text-xs font-semibold text-slate-900 dark:text-slate-100">
                               {comment.authorName}
                             </p>
                           )}
-                          <p className="text-sm text-gray-700">
+                          <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
                             {comment.content}
                           </p>
                         </div>
@@ -382,14 +507,14 @@ export default function PostDetailPage() {
                           <div className="flex shrink-0 gap-2">
                             <button
                               onClick={() => startEditComment(comment)}
-                              className="text-xs text-blue-600 hover:underline"
+                              className="text-xs font-medium text-blue-600 hover:underline dark:text-blue-400"
                             >
                               Edit
                             </button>
                             <button
                               onClick={() => handleDeleteComment(comment.id)}
                               disabled={deletingCommentId === comment.id}
-                              className="text-xs text-red-600 hover:underline disabled:opacity-50"
+                              className="text-xs font-medium text-red-600 hover:underline disabled:opacity-50 dark:text-red-400"
                             >
                               {deletingCommentId === comment.id
                                 ? "Deleting..."
@@ -398,8 +523,8 @@ export default function PostDetailPage() {
                           </div>
                         )}
                       </div>
-                      <p className="mt-1 text-xs text-gray-400">
-                        {new Date(comment.createdAt).toLocaleString()}
+                      <p className="mt-2 text-[11px] text-slate-400">
+                        {formatRelativeTime(comment.createdAt)}
                       </p>
                     </>
                   )}

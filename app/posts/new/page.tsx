@@ -6,16 +6,25 @@ import { createPostSchema, type CreatePostInput } from "../../lib/validation";
 import { createPost } from "../../lib/posts";
 import { getAccessToken } from "../../lib/auth";
 import { createTag, attachTagsToPost } from "../../lib/tags";
-import { suggestContent, type AiSuggestions } from "../../lib/ai";
+import MarkdownEditor from "../../components/editor/MarkdownEditor";
+import AIAssistantPanel from "../../components/ai/AIAssistantPanel";
 import Button from "../../components/ui/Button";
 import Input from "../../components/ui/Input";
-import Textarea from "../../components/ui/Textarea";
-import Card from "../../components/ui/Card";
-import Badge from "../../components/ui/Badge";
 import ErrorAlert from "../../components/ui/ErrorAlert";
+import RequireAuth from "../../components/auth/RequireAuth";
+import { useToast } from "../../components/ui/Toast";
 
 export default function NewPostPage() {
+  return (
+    <RequireAuth>
+      <NewPostContent />
+    </RequireAuth>
+  );
+}
+
+function NewPostContent() {
   const router = useRouter();
+  const { success, error: toastError } = useToast();
   const [tagsInput, setTagsInput] = useState("");
   const [formData, setFormData] = useState<CreatePostInput>({
     title: "",
@@ -28,55 +37,39 @@ export default function NewPostPage() {
   const [serverError, setServerError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // AI suggestions state
-  const [suggestions, setSuggestions] = useState<AiSuggestions | null>(null);
-  const [isGettingSuggestions, setIsGettingSuggestions] = useState(false);
-  const [aiError, setAiError] = useState<string | null>(null);
-
   function handleChange(field: keyof CreatePostInput, value: string) {
     setFormData((prev) => ({ ...prev, [field]: value }));
     setErrors((prev) => ({ ...prev, [field]: undefined }));
   }
 
-  async function handleGetAiSuggestions() {
-    if (formData.content.trim().length < 20) return;
-
-    const token = getAccessToken();
-    if (!token) {
-      router.push("/login");
-      return;
-    }
-
-    setAiError(null);
-    setIsGettingSuggestions(true);
-
-    try {
-      const data = await suggestContent(formData.content, token);
-      setSuggestions(data);
-    } catch (err) {
-      setAiError(
-        err instanceof Error ? err.message : "Failed to get AI suggestions",
-      );
-    } finally {
-      setIsGettingSuggestions(false);
-    }
+  function handleApplyTitle(newTitle: string) {
+    handleChange("title", newTitle);
+    success("Suggested title applied!");
   }
 
-  function handleUseTags() {
-    if (!suggestions?.tags) return;
+  function handleApplyTags(suggestedTags: string[]) {
     const existingTags = tagsInput
       .split(",")
       .map((t) => t.trim())
       .filter(Boolean);
-    const merged = Array.from(
-      new Set([...existingTags, ...suggestions.tags]),
-    ).join(", ");
+    const merged = Array.from(new Set([...existingTags, ...suggestedTags])).join(", ");
     setTagsInput(merged);
+    success("Suggested tags added!");
+  }
+
+  function handleApplyContent(newContent: string) {
+    handleChange("content", newContent);
+    success("Content updated!");
+  }
+
+  function handleAppendContent(additional: string) {
+    handleChange("content", formData.content ? `${formData.content}\n\n${additional}` : additional);
+    success("Outline appended to content!");
   }
 
   async function handleSubmit(
     e: React.FormEvent,
-    submitStatus: "DRAFT" | "PUBLISHED",
+    submitStatus: "DRAFT" | "PUBLISHED"
   ) {
     e.preventDefault();
     setServerError(null);
@@ -103,6 +96,9 @@ export default function NewPostPage() {
     try {
       const post = await createPost(result.data, token);
 
+      // Clear draft autosave
+      localStorage.removeItem("chronicle_draft_new");
+
       if (tagsInput.trim()) {
         const tagNames = tagsInput
           .split(",")
@@ -122,161 +118,102 @@ export default function NewPostPage() {
         }
       }
 
+      success(submitStatus === "PUBLISHED" ? "Article published!" : "Draft saved!");
       router.push(`/posts/${post.id}`);
-    } catch (err) {
-      setServerError(
-        err instanceof Error ? err.message : "Failed to create post",
-      );
+    } catch (err: any) {
+      const msg = err?.message || "Failed to create post";
+      setServerError(msg);
+      toastError(msg);
     } finally {
       setIsSubmitting(false);
     }
   }
 
   return (
-    <main className="mx-auto max-w-2xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-bold text-gray-900">New Post</h1>
+    <main className="mx-auto max-w-4xl px-4 py-8 sm:px-6">
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+            Write New Story
+          </h1>
+          <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
+            Compose your article using full Markdown formatting and AI assistance.
+          </p>
+        </div>
+      </div>
 
       {serverError && <ErrorAlert message={serverError} />}
 
-      <form className="space-y-4">
-        <Input
-          id="title"
-          label="Title"
-          type="text"
-          value={formData.title}
-          onChange={(e) => handleChange("title", e.target.value)}
-          error={errors.title}
-        />
-
-        <div>
-          <Textarea
-            id="content"
-            label="Content"
-            rows={10}
-            value={formData.content}
-            onChange={(e) => handleChange("content", e.target.value)}
-            error={errors.content}
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {/* Editor Form - 2 Cols on Large screens */}
+        <form className="space-y-6 lg:col-span-2">
+          <Input
+            id="title"
+            label="Title"
+            type="text"
+            value={formData.title}
+            onChange={(e) => handleChange("title", e.target.value)}
+            error={errors.title}
+            placeholder="Enter an intriguing title..."
+            required
           />
-          <div className="mt-2 flex justify-end">
+
+          <MarkdownEditor
+            id="content"
+            label="Story Content"
+            value={formData.content}
+            onChange={(val) => handleChange("content", val)}
+            error={errors.content}
+            placeholder="Start drafting your article... Use ## headings, code blocks, lists, etc."
+            rows={14}
+            draftKey="new"
+          />
+
+          <Input
+            id="tags"
+            label="Tags (comma-separated, optional)"
+            type="text"
+            value={tagsInput}
+            onChange={(e) => setTagsInput(e.target.value)}
+            placeholder="nextjs, react, architecture"
+          />
+
+          <div className="flex flex-col gap-3 pt-2 sm:flex-row">
             <Button
               type="button"
               variant="secondary"
-              disabled={
-                isGettingSuggestions || formData.content.trim().length < 20
-              }
-              onClick={handleGetAiSuggestions}
-              className="text-xs"
+              loading={isSubmitting}
+              disabled={isSubmitting}
+              onClick={(e) => handleSubmit(e, "DRAFT")}
+              className="flex-1"
             >
-              {isGettingSuggestions
-                ? "✨ Generating suggestions..."
-                : "✨ Get AI Suggestions"}
+              Save as Draft
+            </Button>
+            <Button
+              type="button"
+              loading={isSubmitting}
+              disabled={isSubmitting}
+              onClick={(e) => handleSubmit(e, "PUBLISHED")}
+              className="flex-1"
+            >
+              Publish Now
             </Button>
           </div>
+        </form>
+
+        {/* AI Assistant Sidebar */}
+        <div className="lg:col-span-1">
+          <div className="sticky top-20">
+            <AIAssistantPanel
+              content={formData.content}
+              onApplyTitle={handleApplyTitle}
+              onApplyTags={handleApplyTags}
+              onApplyContent={handleApplyContent}
+              onAppendContent={handleAppendContent}
+            />
+          </div>
         </div>
-
-        {aiError && <ErrorAlert message={aiError} />}
-
-        {suggestions && (
-          <Card className="border-blue-200 bg-blue-50/40">
-            <div className="mb-3 flex items-center justify-between border-b border-blue-100 pb-2">
-              <span className="text-sm font-semibold text-blue-900">
-                ✨ AI Suggestions
-              </span>
-              <button
-                type="button"
-                onClick={() => setSuggestions(null)}
-                className="text-xs text-gray-500 hover:text-gray-700"
-              >
-                ✕ Dismiss
-              </button>
-            </div>
-
-            {suggestions.title && (
-              <div className="mb-3">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-gray-500">
-                    Suggested Title
-                  </span>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={() => handleChange("title", suggestions.title)}
-                    className="px-2 py-0.5 text-xs"
-                  >
-                    Use Title
-                  </Button>
-                </div>
-                <p className="mt-1 text-sm font-medium text-gray-800">
-                  {suggestions.title}
-                </p>
-              </div>
-            )}
-
-            {suggestions.summary && (
-              <div className="mb-3">
-                <span className="text-xs font-medium text-gray-500">
-                  Summary
-                </span>
-                <p className="mt-1 text-xs italic text-gray-600">
-                  {suggestions.summary}
-                </p>
-              </div>
-            )}
-
-            {suggestions.tags && suggestions.tags.length > 0 && (
-              <div>
-                <div className="mb-1.5 flex items-center justify-between gap-2">
-                  <span className="text-xs font-medium text-gray-500">
-                    Suggested Tags
-                  </span>
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    onClick={handleUseTags}
-                    className="px-2 py-0.5 text-xs"
-                  >
-                    Use Tags
-                  </Button>
-                </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {suggestions.tags.map((tag) => (
-                    <Badge key={tag}>{tag}</Badge>
-                  ))}
-                </div>
-              </div>
-            )}
-          </Card>
-        )}
-
-        <Input
-          id="tags"
-          label="Tags (comma-separated, optional)"
-          type="text"
-          value={tagsInput}
-          onChange={(e) => setTagsInput(e.target.value)}
-          placeholder="javascript, tutorial, react"
-        />
-
-        <div className="flex gap-3">
-          <Button
-            type="button"
-            variant="secondary"
-            disabled={isSubmitting}
-            onClick={(e) => handleSubmit(e, "DRAFT")}
-            className="flex-1"
-          >
-            {isSubmitting ? "Saving..." : "Save as Draft"}
-          </Button>
-          <Button
-            type="button"
-            disabled={isSubmitting}
-            onClick={(e) => handleSubmit(e, "PUBLISHED")}
-            className="flex-1"
-          >
-            {isSubmitting ? "Publishing..." : "Publish"}
-          </Button>
-        </div>
-      </form>
+      </div>
     </main>
   );
 }
