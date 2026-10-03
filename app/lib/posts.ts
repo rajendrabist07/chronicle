@@ -63,3 +63,37 @@ export async function publishPost(id: string, token: string) {
     });
     return res.data;
 }
+
+export async function fetchBookmarkedPosts(token: string, page = 1, limit = 10) {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+    });
+    const res = await apiFetch<PaginatedResponse<Post>>(
+        `/posts/bookmarks?${params.toString()}`,
+        { token }
+    );
+    return res;
+}
+
+export async function toggleBookmark(postId: string, token: string) {
+    const res = await apiFetch<ApiSuccessResponse<{ bookmarked: boolean }>>(
+        `/posts/${postId}/bookmark`,
+        {
+            method: 'POST',
+            token,
+        }
+    );
+    return res.data;
+}
+
+export async function toggleLike(postId: string, token: string) {
+    const res = await apiFetch<ApiSuccessResponse<{ liked: boolean; likeCount: number }>>(
+        `/posts/${postId}/like`,
+        {
+            method: 'POST',
+            token,
+        }
+    );
+    return res.data;
+}

@@ -1,9 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
+import { getAccessToken } from "../lib/auth";
+import { fetchUnreadCount } from "../lib/notifications";
 import Logo from "./brand/Logo";
 import Avatar from "./ui/Avatar";
 import DropdownMenu from "./ui/DropdownMenu";
@@ -27,6 +29,47 @@ export default function Navbar() {
   const router = useRouter();
   const { user, logout } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState<number>(0);
+
+  const loadUnreadCount = useCallback(async () => {
+    if (!user) return;
+    const token = getAccessToken();
+    if (!token) return;
+    try {
+      const count = await fetchUnreadCount(token);
+      setUnreadCount(count);
+    } catch {
+      // Silently ignore background polling errors
+    }
+  }, [user]);
+
+  // Initial load and periodic polling when tab is visible
+  useEffect(() => {
+    if (!user) {
+      setUnreadCount(0);
+      return;
+    }
+
+    loadUnreadCount();
+
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        loadUnreadCount();
+      }
+    }, 60000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        loadUnreadCount();
+      }
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
+  }, [user, loadUnreadCount, pathname]);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -95,9 +138,14 @@ export default function Navbar() {
                 <Link
                   href="/notifications"
                   className="relative flex h-9 w-9 items-center justify-center rounded-md border border-slate-200 text-slate-600 transition-colors hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 dark:border-slate-800 dark:text-slate-300 dark:hover:bg-slate-900"
-                  aria-label="Notifications"
+                  aria-label={unreadCount > 0 ? `${unreadCount} unread notifications` : "Notifications"}
                 >
                   <Bell className="h-4 w-4" />
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-blue-600 px-1 text-[10px] font-bold text-white shadow-sm ring-2 ring-white dark:ring-slate-950">
+                      {unreadCount > 99 ? "99+" : unreadCount}
+                    </span>
+                  )}
                 </Link>
 
                 {/* User Dropdown */}

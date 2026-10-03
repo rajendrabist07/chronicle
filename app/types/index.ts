@@ -47,3 +47,13 @@ export interface PaginatedResponse<T> {
         totalPages: number;
     };
 }
+
+export interface Notification {
+    id: string;
+    userId: string;
+    type: 'LIKE' | 'COMMENT' | 'SYSTEM' | string;
+    message: string;
+    read: boolean;
+    data?: Record<string, any> | null;
+    createdAt: string;
+}
