@@ -6,13 +6,17 @@ import { useAuth } from "../context/AuthContext";
 import { fetchPosts } from "../lib/posts";
 import { getAccessToken } from "../lib/auth";
 import type { Post } from "../types";
+import Button from "../components/ui/Button";
 import Link from "next/link";
+
+type StatusFilter = "ALL" | "DRAFT" | "PUBLISHED";
 
 export default function PostsPage() {
   const router = useRouter();
   const { isLoading: authLoading } = useAuth();
 
   const [posts, setPosts] = useState<Post[]>([]);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("ALL");
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,7 +32,12 @@ export default function PostsPage() {
     }
 
     setIsLoading(true);
-    fetchPosts(token, page)
+    fetchPosts(
+      token,
+      page,
+      10,
+      statusFilter === "ALL" ? undefined : statusFilter,
+    )
       .then((res) => {
         setPosts(res.data);
         setTotalPages(res.pagination.totalPages);
@@ -37,7 +46,12 @@ export default function PostsPage() {
         setError(err instanceof Error ? err.message : "Failed to load posts"),
       )
       .finally(() => setIsLoading(false));
-  }, [authLoading, router, page]);
+  }, [authLoading, router, page, statusFilter]);
+
+  function handleFilterChange(newFilter: StatusFilter) {
+    setStatusFilter(newFilter);
+    setPage(1);
+  }
 
   if (authLoading || isLoading) {
     return (
@@ -57,18 +71,43 @@ export default function PostsPage() {
 
   return (
     <main className="mx-auto max-w-3xl px-4 py-8">
-      <div className="mb-6 flex items-center justify-between">
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Posts</h1>
-        <Link
-          href="/posts/new"
-          className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
-        >
-          + New Post
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="flex gap-1 rounded-md border border-gray-200 p-1">
+            <Button
+              variant={statusFilter === "ALL" ? "primary" : "secondary"}
+              onClick={() => handleFilterChange("ALL")}
+              className="px-3 py-1 text-xs"
+            >
+              All
+            </Button>
+            <Button
+              variant={statusFilter === "DRAFT" ? "primary" : "secondary"}
+              onClick={() => handleFilterChange("DRAFT")}
+              className="px-3 py-1 text-xs"
+            >
+              Draft
+            </Button>
+            <Button
+              variant={statusFilter === "PUBLISHED" ? "primary" : "secondary"}
+              onClick={() => handleFilterChange("PUBLISHED")}
+              className="px-3 py-1 text-xs"
+            >
+              Published
+            </Button>
+          </div>
+          <Link
+            href="/posts/new"
+            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
+          >
+            + New Post
+          </Link>
+        </div>
       </div>
 
       {posts.length === 0 ? (
-        <p className="text-gray-500">No posts yet.</p>
+        <p className="text-gray-500">No posts found.</p>
       ) : (
         <>
           <ul className="space-y-4">
@@ -97,23 +136,23 @@ export default function PostsPage() {
 
           {totalPages > 1 && (
             <div className="mt-6 flex items-center justify-center gap-4">
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                 disabled={page === 1}
-                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Previous
-              </button>
+              </Button>
               <span className="text-sm text-gray-600">
                 Page {page} of {totalPages}
               </span>
-              <button
+              <Button
+                variant="secondary"
                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                 disabled={page === totalPages}
-                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Next
-              </button>
+              </Button>
             </div>
           )}
         </>

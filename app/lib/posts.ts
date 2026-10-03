@@ -2,9 +2,21 @@ import { apiFetch } from './api';
 import type { Post, PaginatedResponse, ApiSuccessResponse } from '../types';
 import type { CreatePostInput } from './validation';
 
-export async function fetchPosts(token: string, page = 1, limit = 10) {
+export async function fetchPosts(
+    token: string,
+    page = 1,
+    limit = 10,
+    status?: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+) {
+    const params = new URLSearchParams({
+        page: page.toString(),
+        limit: limit.toString(),
+    });
+    if (status) {
+        params.set('status', status);
+    }
     const res = await apiFetch<PaginatedResponse<Post>>(
-        `/posts?page=${page}&limit=${limit}`,
+        `/posts?${params.toString()}`,
         { token },
     );
     return res;
