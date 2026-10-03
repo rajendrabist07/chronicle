@@ -5,6 +5,7 @@ import Button from "./components/ui/Button";
 import Card from "./components/ui/Card";
 import Badge from "./components/ui/Badge";
 import Avatar from "./components/ui/Avatar";
+import JsonLd from "./components/seo/JsonLd";
 import {
   Sparkles,
   MessageSquare,
@@ -20,8 +21,32 @@ export default async function HomePage() {
   const postsResponse = await getPublicPosts({ limit: 3 });
   const latestPosts = postsResponse.data || [];
 
+  const websiteSchema = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    name: SITE_CONFIG.name,
+    url: SITE_CONFIG.url,
+    description: SITE_CONFIG.description,
+    potentialAction: {
+      "@type": "SearchAction",
+      target: `${SITE_CONFIG.url}/explore?q={search_term_string}`,
+      "query-input": "required name=search_term_string",
+    },
+  };
+
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: SITE_CONFIG.name,
+    url: SITE_CONFIG.url,
+    logo: `${SITE_CONFIG.url}/icon.svg`,
+  };
+
   return (
     <div className="flex flex-col gap-16 pb-16">
+      <JsonLd data={websiteSchema} />
+      <JsonLd data={organizationSchema} />
+
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-slate-200/80 bg-gradient-to-b from-slate-50 via-white to-white py-20 transition-colors dark:border-slate-800/80 dark:from-slate-900/50 dark:via-slate-950 dark:to-slate-950">
         <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">

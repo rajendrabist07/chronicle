@@ -1,5 +1,7 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublicPosts, getPublicTags, calculateReadingTime } from "../lib/public";
+import { SITE_CONFIG } from "../lib/site";
 import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
 import Avatar from "../components/ui/Avatar";
@@ -15,6 +17,22 @@ interface ExplorePageProps {
     sort?: string;
     page?: string;
   }>;
+}
+
+export async function generateMetadata({ searchParams }: ExplorePageProps): Promise<Metadata> {
+  const resolved = await searchParams;
+  const isSearching = Boolean(resolved.q);
+
+  return {
+    title: resolved.tag ? `#${resolved.tag} Articles — Explore` : "Explore Articles",
+    description: "Discover public engineering articles, tutorials, and community perspectives.",
+    alternates: {
+      canonical: "/explore",
+    },
+    robots: isSearching
+      ? { index: false, follow: true }
+      : { index: true, follow: true },
+  };
 }
 
 export default async function ExplorePage({ searchParams }: ExplorePageProps) {

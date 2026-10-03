@@ -1,16 +1,42 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicUser, getPublicPosts, calculateReadingTime } from "../../lib/public";
+import { SITE_CONFIG } from "../../lib/site";
 import Avatar from "../../components/ui/Avatar";
 import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
 import EmptyState from "../../components/ui/EmptyState";
+import JsonLd from "../../components/seo/JsonLd";
 import { ArrowLeft, Calendar, FileText } from "lucide-react";
 
 interface UserProfilePageProps {
   params: Promise<{
     id: string;
   }>;
+}
+
+export async function generateMetadata({ params }: UserProfilePageProps): Promise<Metadata> {
+  const { id } = await params;
+  const user = await getPublicUser(id);
+
+  if (!user) {
+    return {
+      title: "Author Not Found",
+    };
+  }
+
+  return {
+    title: `${user.name} — Author Profile`,
+    description: user.bio || `Explore published articles and stories by ${user.name} on ${SITE_CONFIG.name}.`,
+    alternates: {
+      canonical: `/u/${encodeURIComponent(id)}`,
+    },
+    openGraph: {
+      title: `${user.name} — Author Profile on ${SITE_CONFIG.name}`,
+      description: user.bio || `Read articles written by ${user.name}.`,
+    },
+  };
 }
 
 export default async function UserProfilePage({ params }: UserProfilePageProps) {
@@ -23,11 +49,24 @@ export default async function UserProfilePage({ params }: UserProfilePageProps) 
 
   // Fetch author posts
   const postsResponse = await getPublicPosts({ limit: 20 });
-  // Filter for posts by this author if returned by list
   const authorPosts = (postsResponse.data || []).filter((p) => p.authorId === id);
+  const userUrl = `${SITE_CONFIG.url}/u/${encodeURIComponent(id)}`;
+
+  const profileSchema = {
+    "@context": "https://schema.org",
+    "@type": "ProfilePage",
+    mainEntity: {
+      "@type": "Person",
+      name: user.name,
+      description: user.bio || undefined,
+      url: userUrl,
+    },
+  };
 
   return (
     <main className="mx-auto max-w-4xl px-4 py-10 sm:px-6">
+      <JsonLd data={profileSchema} />
+
       <Link
         href="/explore"
         className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 mb-6"

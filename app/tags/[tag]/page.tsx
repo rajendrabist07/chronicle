@@ -1,10 +1,13 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublicPosts, calculateReadingTime } from "../../lib/public";
+import { SITE_CONFIG } from "../../lib/site";
 import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
 import Avatar from "../../components/ui/Avatar";
 import Button from "../../components/ui/Button";
 import EmptyState from "../../components/ui/EmptyState";
+import JsonLd from "../../components/seo/JsonLd";
 import { Tag as TagIcon, ArrowLeft } from "lucide-react";
 
 interface TagPageProps {
@@ -13,15 +16,60 @@ interface TagPageProps {
   }>;
 }
 
+export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
+  const { tag } = await params;
+  const decodedTag = decodeURIComponent(tag);
+
+  return {
+    title: `#${decodedTag} Articles`,
+    description: `Discover articles, stories, and engineering guides tagged with #${decodedTag} on ${SITE_CONFIG.name}.`,
+    alternates: {
+      canonical: `/tags/${encodeURIComponent(tag)}`,
+    },
+    openGraph: {
+      title: `#${decodedTag} Articles — ${SITE_CONFIG.name}`,
+      description: `Explore published posts filed under #${decodedTag}.`,
+    },
+  };
+}
+
 export default async function TagPage({ params }: TagPageProps) {
   const { tag } = await params;
   const decodedTag = decodeURIComponent(tag);
 
   const postsResponse = await getPublicPosts({ tag: decodedTag, limit: 12 });
   const posts = postsResponse.data || [];
+  const tagUrl = `${SITE_CONFIG.url}/tags/${encodeURIComponent(tag)}`;
+
+  const breadcrumbSchema = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: "Home",
+        item: SITE_CONFIG.url,
+      },
+      {
+        "@type": "ListItem",
+        position: 2,
+        name: "Topics",
+        item: `${SITE_CONFIG.url}/explore`,
+      },
+      {
+        "@type": "ListItem",
+        position: 3,
+        name: `#${decodedTag}`,
+        item: tagUrl,
+      },
+    ],
+  };
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-10 sm:px-6">
+      <JsonLd data={breadcrumbSchema} />
+
       <Link
         href="/explore"
         className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-blue-600 dark:text-slate-400 dark:hover:text-blue-400 mb-6"
