@@ -1,18 +1,25 @@
-import { TextareaHTMLAttributes } from "react";
+import { SelectHTMLAttributes } from "react";
 
-export interface TextareaProps
-  extends TextareaHTMLAttributes<HTMLTextAreaElement> {
-  label?: string;
-  error?: string;
+export interface SelectOption {
+  value: string;
+  label: string;
 }
 
-export default function Textarea({
+interface SelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
+  label?: string;
+  error?: string;
+  options?: SelectOption[];
+}
+
+export default function Select({
   label,
   error,
   id,
+  options,
+  children,
   className = "",
   ...rest
-}: TextareaProps) {
+}: SelectProps) {
   return (
     <div className="w-full">
       {label && (
@@ -23,7 +30,7 @@ export default function Textarea({
           {label}
         </label>
       )}
-      <textarea
+      <select
         id={id}
         aria-invalid={error ? "true" : undefined}
         aria-describedby={error && id ? `${id}-error` : undefined}
@@ -31,7 +38,15 @@ export default function Textarea({
           error ? "border-red-500 focus:border-red-500 focus:ring-red-500" : ""
         } ${className}`}
         {...rest}
-      />
+      >
+        {options
+          ? options.map((opt) => (
+              <option key={opt.value} value={opt.value}>
+                {opt.label}
+              </option>
+            ))
+          : children}
+      </select>
       {error && (
         <p
           id={id ? `${id}-error` : undefined}
