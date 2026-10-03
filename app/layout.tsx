@@ -5,6 +5,7 @@ import { AuthProvider } from "./context/AuthContext";
 import { ToastProvider } from "./components/ui/Toast";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import UnverifiedEmailBanner from "./components/auth/UnverifiedEmailBanner";
 import { SITE_CONFIG } from "./lib/site";
 
 const geistSans = Geist({
@@ -100,6 +101,7 @@ export default function RootLayout({
         <AuthProvider>
           <ToastProvider>
             <Navbar />
+            <UnverifiedEmailBanner />
             <main id="main" className="flex-1">
               {children}
             </main>

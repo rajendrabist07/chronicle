@@ -8,6 +8,9 @@ vi.mock('next/navigation', () => ({
   useRouter: () => ({
     push: vi.fn(),
   }),
+  useSearchParams: () => ({
+    get: vi.fn().mockReturnValue(null),
+  }),
 }));
 
 vi.mock('../app/context/AuthContext', () => ({
@@ -33,7 +36,7 @@ describe('LoginPage', () => {
     const user = userEvent.setup();
     render(<LoginPage />);
 
-    const submitButton = screen.getByRole('button', { name: /^log in$/i });
+    const submitButton = screen.getByRole('button', { name: /sign in|log in/i });
     await user.click(submitButton);
 
     expect(await screen.findByText('Invalid email format')).toBeInTheDocument();
@@ -58,9 +61,9 @@ describe('LoginPage', () => {
     render(<LoginPage />);
 
     await user.type(screen.getByLabelText(/email/i), 'user@example.com');
-    await user.type(screen.getByLabelText(/password/i), 'password123');
+    await user.type(screen.getByLabelText(/^password$/i), 'password123');
 
-    const submitButton = screen.getByRole('button', { name: /^log in$/i });
+    const submitButton = screen.getByRole('button', { name: /sign in|log in/i });
     await user.click(submitButton);
 
     expect(auth.login).toHaveBeenCalledWith({

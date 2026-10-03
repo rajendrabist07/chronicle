@@ -3,6 +3,8 @@ export interface User {
     email: string;
     name: string;
     role: 'OWNER' | 'ADMIN' | 'MEMBER';
+    emailVerified?: boolean;
+    bio?: string | null;
 }
 
 export interface AuthResponse {
