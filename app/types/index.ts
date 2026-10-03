@@ -19,6 +19,7 @@ export interface Post {
     status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
     publishedAt: string | null;
     authorId: string;
+    authorName: string;
     createdAt: string;
     tags?: { id: string; name: string }[];
 }

@@ -86,6 +86,7 @@ export default function PostsPage() {
                 <p className="mt-1 text-sm text-gray-500">
                   {post.status} ·{" "}
                   {new Date(post.createdAt).toLocaleDateString()}
+                  {post.authorName && ` · by ${post.authorName}`}
                 </p>
                 <p className="mt-2 text-gray-700 line-clamp-2">
                   {post.content}

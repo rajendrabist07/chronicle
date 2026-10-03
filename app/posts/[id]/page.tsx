@@ -294,6 +294,7 @@ export default function PostDetailPage() {
             </div>
             <p className="mt-2 text-sm text-gray-500">
               {post.status} · {new Date(post.createdAt).toLocaleDateString()}
+              {post.authorName && ` · by ${post.authorName}`}
             </p>
             <p className="mt-4 whitespace-pre-wrap text-gray-700">
               {post.content}
@@ -366,9 +367,16 @@ export default function PostDetailPage() {
                   ) : (
                     <>
                       <div className="flex items-start justify-between gap-2">
-                        <p className="text-sm text-gray-700">
-                          {comment.content}
-                        </p>
+                        <div>
+                          {comment.authorName && (
+                            <p className="mb-1 text-xs font-semibold text-gray-900">
+                              {comment.authorName}
+                            </p>
+                          )}
+                          <p className="text-sm text-gray-700">
+                            {comment.content}
+                          </p>
+                        </div>
                         {canModifyComment && (
                           <div className="flex shrink-0 gap-2">
                             <button
