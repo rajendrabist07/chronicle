@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublicPosts, getPublicTags, calculateReadingTime } from "../lib/public";
+import { formatRelativeTime } from "../lib/time";
 import { SITE_CONFIG } from "../lib/site";
 import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
@@ -8,7 +9,8 @@ import Avatar from "../components/ui/Avatar";
 import Button from "../components/ui/Button";
 import EmptyState from "../components/ui/EmptyState";
 import Pagination from "../components/ui/Pagination";
-import { Search, Compass, BookOpen } from "lucide-react";
+import ExploreSearchInput from "../components/explore/ExploreSearchInput";
+import { Compass, BookOpen } from "lucide-react";
 
 interface ExplorePageProps {
   searchParams: Promise<{
@@ -86,22 +88,12 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
           </p>
         </div>
 
-        {/* Search Form (Progressive Enhancement - works without JS) */}
-        <form method="get" action="/explore" className="relative flex max-w-md items-center">
-          <input
-            type="text"
-            name="q"
-            defaultValue={query}
-            placeholder="Search articles..."
-            className="w-full rounded-lg border border-slate-300 bg-white py-2 pl-9 pr-20 text-sm text-slate-900 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
-          />
-          <Search className="absolute left-3 h-4 w-4 text-slate-400" aria-hidden="true" />
-          {activeTag && <input type="hidden" name="tag" value={activeTag} />}
-          {activeSort && <input type="hidden" name="sort" value={activeSort} />}
-          <Button type="submit" size="sm" className="absolute right-1">
-            Search
-          </Button>
-        </form>
+        {/* Search Bar with 300ms Debounce & Progressive Enhancement */}
+        <ExploreSearchInput
+          initialQuery={query}
+          activeTag={activeTag}
+          activeSort={activeSort}
+        />
       </div>
 
       {/* Tag Chips Filter Bar */}
@@ -204,7 +196,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
                       dateTime={post.createdAt}
                       className="text-[11px] text-slate-400"
                     >
-                      {new Date(post.createdAt).toLocaleDateString()}
+                      {formatRelativeTime(post.createdAt)}
                     </time>
                   </div>
                 </div>

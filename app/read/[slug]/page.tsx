@@ -14,6 +14,7 @@ import Avatar from "../../components/ui/Avatar";
 import Badge from "../../components/ui/Badge";
 import JsonLd from "../../components/seo/JsonLd";
 import PublicPostComments from "../../components/comments/PublicPostComments";
+import ArticleActionBar from "../../components/engagement/ArticleActionBar";
 import { ArrowLeft, Calendar, Clock } from "lucide-react";
 
 interface ReadPageProps {
@@ -192,6 +193,15 @@ export default async function ReadPostPage({ params }: ReadPageProps) {
           )}
         </header>
 
+        {/* Action Bar (Like, Save, Share) */}
+        <div className="mt-6 mb-8">
+          <ArticleActionBar
+            postId={post.id}
+            slug={post.slug}
+            commentsCount={comments.length}
+          />
+        </div>
+
         {/* Markdown Rendered Article Body */}
         <div className="prose prose-slate max-w-none dark:prose-invert prose-headings:font-bold prose-a:text-blue-600 dark:prose-a:text-blue-400 prose-pre:bg-slate-900 prose-pre:border prose-pre:border-slate-800 text-slate-800 dark:text-slate-200 leading-relaxed">
           <ReactMarkdown
@@ -200,6 +210,15 @@ export default async function ReadPostPage({ params }: ReadPageProps) {
           >
             {post.content}
           </ReactMarkdown>
+        </div>
+
+        {/* Action Bar Bottom */}
+        <div className="mt-10">
+          <ArticleActionBar
+            postId={post.id}
+            slug={post.slug}
+            commentsCount={comments.length}
+          />
         </div>
       </article>
 
