@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { verifyEmail, resendVerificationEmail } from "../lib/auth";
+import { describeApiError } from "../lib/errors";
 import Button from "../components/ui/Button";
 import Card from "../components/ui/Card";
 import Spinner from "../components/ui/Spinner";
@@ -37,11 +38,7 @@ function VerifyEmailContent() {
       })
       .catch((err) => {
         setStatus("error");
-        setErrorMessage(
-          err instanceof Error
-            ? err.message
-            : "The verification link is invalid or has expired.",
-        );
+        setErrorMessage(describeApiError(err));
       });
   }, [token]);
 
@@ -55,9 +52,7 @@ function VerifyEmailContent() {
       await resendVerificationEmail(emailInput.trim());
       setResendStatus("Verification email sent. Please check your inbox.");
     } catch (err) {
-      setResendStatus(
-        err instanceof Error ? err.message : "Failed to resend verification email.",
-      );
+      setResendStatus(describeApiError(err));
     } finally {
       setIsResending(false);
     }

@@ -71,4 +71,46 @@ describe('LoginPage', () => {
       password: 'password123',
     });
   });
+
+  it('displays user-friendly message when server returns 500 error', async () => {
+    const serverErr = Object.assign(
+      new Error('The table public.post_likes does not exist'),
+      { status: 500 }
+    );
+    vi.mocked(auth.login).mockRejectedValueOnce(serverErr);
+
+    const user = userEvent.setup();
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/email/i), 'user@example.com');
+    await user.type(screen.getByLabelText(/^password$/i), 'password123');
+
+    const submitButton = screen.getByRole('button', { name: /sign in|log in/i });
+    await user.click(submitButton);
+
+    expect(
+      await screen.findByText(
+        'Something went wrong on our side. Your data was not lost. Please try again shortly.'
+      )
+    ).toBeInTheDocument();
+  });
+
+  it('displays wake-up message when server has network failure / timeout', async () => {
+    vi.mocked(auth.login).mockRejectedValueOnce(new TypeError('Failed to fetch'));
+
+    const user = userEvent.setup();
+    render(<LoginPage />);
+
+    await user.type(screen.getByLabelText(/email/i), 'user@example.com');
+    await user.type(screen.getByLabelText(/^password$/i), 'password123');
+
+    const submitButton = screen.getByRole('button', { name: /sign in|log in/i });
+    await user.click(submitButton);
+
+    expect(
+      await screen.findByText(
+        "We can't reach the server right now. It may be waking up — please try again in a minute."
+      )
+    ).toBeInTheDocument();
+  });
 });

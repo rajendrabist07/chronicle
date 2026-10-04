@@ -5,6 +5,7 @@ import RequireAuth from "../components/auth/RequireAuth";
 import { useAuth } from "../context/AuthContext";
 import { getAccessToken, changePassword, resendVerificationEmail } from "../lib/auth";
 import { updateProfile } from "../lib/users";
+import { describeApiError } from "../lib/errors";
 import PasswordStrengthMeter from "../components/auth/PasswordStrengthMeter";
 import Card from "../components/ui/Card";
 import Input from "../components/ui/Input";
@@ -81,7 +82,7 @@ function SettingsContent() {
       setUser(updatedUser);
       success("Profile updated successfully");
     } catch (err: any) {
-      const msg = err.message || "Failed to update profile";
+      const msg = describeApiError(err);
       setProfileError(msg);
       error(msg);
     } finally {
@@ -117,7 +118,7 @@ function SettingsContent() {
       setNewPassword("");
       setConfirmPassword("");
     } catch (err: any) {
-      const msg = err.message || "Failed to change password";
+      const msg = describeApiError(err);
       setSecurityError(msg);
       error(msg);
     } finally {
@@ -132,7 +133,7 @@ function SettingsContent() {
       await resendVerificationEmail(user.email);
       success("Verification link sent to your email");
     } catch (err: any) {
-      error(err.message || "Failed to send verification email");
+      error(describeApiError(err));
     } finally {
       setResendingEmail(false);
     }

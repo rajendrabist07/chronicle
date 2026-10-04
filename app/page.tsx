@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { getPublicPosts, calculateReadingTime } from "./lib/public";
+import type { Post } from "./types";
 import { SITE_CONFIG } from "./lib/site";
 import Button from "./components/ui/Button";
 import Card from "./components/ui/Card";
@@ -18,8 +19,16 @@ import {
 } from "lucide-react";
 
 export default async function HomePage() {
-  const postsResponse = await getPublicPosts({ limit: 3 });
-  const latestPosts = postsResponse.data || [];
+  let latestPosts: Post[] = [];
+  let fetchFailed = false;
+
+  try {
+    const postsResponse = await getPublicPosts({ limit: 3 });
+    latestPosts = postsResponse.data || [];
+  } catch (err) {
+    fetchFailed = true;
+    console.error("Failed to load latest posts on home page:", err);
+  }
 
   const websiteSchema = {
     "@context": "https://schema.org",
@@ -214,7 +223,23 @@ export default async function HomePage() {
           </Link>
         </div>
 
-        {latestPosts.length === 0 ? (
+        {fetchFailed ? (
+          <div className="mt-8 rounded-xl border border-amber-200 bg-amber-50/60 p-8 text-center dark:border-amber-900/40 dark:bg-amber-950/30">
+            <p className="text-sm font-semibold text-amber-900 dark:text-amber-200">
+              Latest articles are temporarily unavailable.
+            </p>
+            <p className="mt-1 text-xs text-amber-700 dark:text-amber-400">
+              The server may be waking up or updating. You can explore or start writing below.
+            </p>
+            <div className="mt-4 flex justify-center gap-3">
+              <Link href="/">
+                <Button variant="secondary" size="sm">
+                  Refresh
+                </Button>
+              </Link>
+            </div>
+          </div>
+        ) : latestPosts.length === 0 ? (
           <div className="mt-8 rounded-xl border border-dashed border-slate-200 p-8 text-center dark:border-slate-800">
             <BookOpen className="mx-auto h-8 w-8 text-slate-400" />
             <p className="mt-3 text-sm text-slate-500 dark:text-slate-400">

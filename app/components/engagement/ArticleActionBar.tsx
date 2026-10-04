@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { getAccessToken } from "../../lib/auth";
 import { toggleLike, toggleBookmark } from "../../lib/posts";
+import { describeApiError } from "../../lib/errors";
 import { useToast } from "../ui/Toast";
 import Button from "../ui/Button";
 import { Heart, Bookmark, Share2, MessageSquare } from "lucide-react";
@@ -69,7 +70,7 @@ export default function ArticleActionBar({
       // Rollback
       setLiked(prevLiked);
       setLikeCount(prevCount);
-      error(err.message || "Failed to update like");
+      error(describeApiError(err));
     } finally {
       setLikeLoading(false);
     }
@@ -105,7 +106,7 @@ export default function ArticleActionBar({
     } catch (err: any) {
       // Rollback
       setBookmarked(prevBookmarked);
-      error(err.message || "Failed to update bookmark");
+      error(describeApiError(err));
     } finally {
       setBookmarkLoading(false);
     }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { registerSchema, type RegisterInput } from "../lib/validation";
 import { register, resendVerificationEmail, saveTokens } from "../lib/auth";
 import { evaluatePasswordStrength } from "../lib/passwordStrength";
+import { describeApiError } from "../lib/errors";
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -64,9 +65,7 @@ export default function RegisterPage() {
       setUser(data.user);
       setRegisteredEmail(formData.email);
     } catch (err) {
-      setServerError(
-        err instanceof Error ? err.message : "Registration failed",
-      );
+      setServerError(describeApiError(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -90,7 +89,7 @@ export default function RegisterPage() {
         });
       }, 1000);
     } catch (err) {
-      setResendMessage(err instanceof Error ? err.message : "Failed to resend email.");
+      setResendMessage(describeApiError(err));
     } finally {
       setIsResending(false);
     }

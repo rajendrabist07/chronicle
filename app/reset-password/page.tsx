@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { resetPasswordSchema } from "../lib/validation";
 import { resetPassword } from "../lib/auth";
+import { describeApiError } from "../lib/errors";
 import { evaluatePasswordStrength } from "../lib/passwordStrength";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -56,11 +57,7 @@ function ResetPasswordForm() {
       toast.success("Password updated successfully! Please sign in with your new password.");
       router.push("/login");
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Failed to reset password. The link may have expired.",
-      );
+      setError(describeApiError(err));
     } finally {
       setIsSubmitting(false);
     }

@@ -85,14 +85,14 @@
 ## 🚀 Local Development Setup
 
 ### Prerequisites
-- Node.js 20+
+- Node.js 22+ (matches `.nvmrc`)
 - npm 10+
 
 ### 1. Clone & Install Dependencies
 ```bash
 git clone https://github.com/rajendrabist07/content-platform-web.git
 cd content-platform-web
-npm install
+npm ci
 ```
 
 ### 2. Environment Configuration
@@ -115,7 +115,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ### 4. Run Tests & Validation
 ```bash
-# Run unit and component test suites with Vitest
+# Run 11 unit and component test suites with Vitest (66 tests)
 npm test
 
 # Type check
@@ -132,13 +132,22 @@ npm run build
 Tests are located in the `__tests__/` directory and run via Vitest + Testing Library:
 - `__tests__/Button.test.tsx` — Button rendering, sizes, variants, loading states.
 - `__tests__/Primitives.test.tsx` — Avatar, Badge, Skeleton, Card, Toast primitives.
-- `__tests__/LoginPage.test.tsx` — Authentication form submission and error rendering.
+- `__tests__/LoginPage.test.tsx` — Authentication form submission, validation, and 500/network error resilience.
+- `__tests__/RegisterPage.test.tsx` — Registration form submission, Prisma 500 error mapping, and network wake-up notice.
 - `__tests__/VerifyEmail.test.tsx` — Email verification token extraction and error handling.
+- `__tests__/errors.test.ts` — API error descriptor (`describeApiError`) mapping tests.
 - `__tests__/passwordStrength.test.ts` — Password complexity scoring and feedback.
-- `__tests__/public.test.ts` — Reading time calculator and public fetchers.
+- `__tests__/public.test.ts` — Server fetch resilience, timeouts, 404/500/502 handling, and reading time calculator.
 - `__tests__/redirect.test.ts` — Open redirect prevention (`safeNextPath`).
 - `__tests__/time.test.ts` — Relative time formatting (`formatRelativeTime`).
 - `__tests__/validation.test.ts` — Zod schema validation rules.
+
+---
+
+## 📖 Operations & Troubleshooting Runbook
+
+For incident diagnostic procedures, backend cold-start behavior, PostgreSQL Prisma migration fixes (`P2021/P2022`), and post-deployment smoke checklists, refer to:
+👉 **[Operations Runbook (`docs/RUNBOOK.md`)](docs/RUNBOOK.md)**
 
 ---
 

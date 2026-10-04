@@ -6,6 +6,7 @@ import Link from "next/link";
 import { loginSchema, type LoginInput } from "../lib/validation";
 import { login, saveTokens } from "../lib/auth";
 import { safeNextPath } from "../lib/redirect";
+import { describeApiError } from "../lib/errors";
 import { useAuth } from "../context/AuthContext";
 import Button from "../components/ui/Button";
 import Input from "../components/ui/Input";
@@ -58,7 +59,7 @@ function LoginForm() {
       setUser(data.user);
       router.push(nextUrl);
     } catch (err) {
-      setServerError(err instanceof Error ? err.message : "Login failed");
+      setServerError(describeApiError(err));
     } finally {
       setIsSubmitting(false);
     }

@@ -5,6 +5,7 @@ import Link from "next/link";
 import RequireAuth from "../components/auth/RequireAuth";
 import { getAccessToken } from "../lib/auth";
 import { fetchBookmarkedPosts, toggleBookmark } from "../lib/posts";
+import { describeApiError } from "../lib/errors";
 import type { Post } from "../types";
 import { calculateReadingTime } from "../lib/public";
 import { formatRelativeTime } from "../lib/time";
@@ -50,7 +51,7 @@ function BookmarksContent() {
         setTotalPages(res.pagination.totalPages);
         setTotalCount(res.pagination.total);
       } catch (err: any) {
-        error(err.message || "Failed to load bookmarks");
+        error(describeApiError(err));
       } finally {
         setLoading(false);
       }
@@ -70,7 +71,7 @@ function BookmarksContent() {
       setPosts((prev) => prev.filter((p) => p.id !== postId));
       info("Bookmark removed");
     } catch (err: any) {
-      error(err.message || "Failed to remove bookmark");
+      error(describeApiError(err));
     }
   }
 

@@ -8,6 +8,7 @@ import {
   markNotificationAsRead,
   markAllNotificationsAsRead,
 } from "../lib/notifications";
+import { describeApiError } from "../lib/errors";
 import type { Notification } from "../types";
 import { formatRelativeTime } from "../lib/time";
 import Card from "../components/ui/Card";
@@ -55,7 +56,7 @@ function NotificationsContent() {
         setTotalPages(res.pagination.totalPages);
         setTotalCount(res.pagination.total);
       } catch (err: any) {
-        error(err.message || "Failed to load notifications");
+        error(describeApiError(err));
       } finally {
         setLoading(false);
       }
@@ -89,7 +90,7 @@ function NotificationsContent() {
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       success("All notifications marked as read");
     } catch (err: any) {
-      error(err.message || "Failed to mark all as read");
+      error(describeApiError(err));
     } finally {
       setMarkingAll(false);
     }

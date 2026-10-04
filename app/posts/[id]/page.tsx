@@ -21,6 +21,7 @@ import {
   type Comment,
 } from "../../lib/comments";
 import { getAccessToken } from "../../lib/auth";
+import { describeApiError } from "../../lib/errors";
 import type { Post } from "../../types";
 import { formatRelativeTime } from "../../lib/time";
 import { calculateReadingTime } from "../../lib/public";
@@ -90,7 +91,7 @@ export default function PostDetailPage() {
         setComments(commentsData);
       })
       .catch((err) =>
-        setError(err instanceof Error ? err.message : "Failed to load post")
+        setError(describeApiError(err))
       )
       .finally(() => setIsLoading(false));
   }, [authLoading, postId, router]);
@@ -111,7 +112,7 @@ export default function PostDetailPage() {
       setNewComment("");
       success("Comment posted!");
     } catch (err: any) {
-      toastError(err?.message || "Failed to post comment");
+      toastError(describeApiError(err));
     } finally {
       setIsSubmittingComment(false);
     }
@@ -133,7 +134,7 @@ export default function PostDetailPage() {
       setIsEditing(false);
       success("Post updated successfully!");
     } catch (err: any) {
-      const msg = err?.message || "Failed to update post";
+      const msg = describeApiError(err);
       setActionError(msg);
       toastError(msg);
     } finally {
@@ -155,7 +156,7 @@ export default function PostDetailPage() {
       info("Post deleted");
       router.push("/posts");
     } catch (err: any) {
-      const msg = err?.message || "Failed to delete post";
+      const msg = describeApiError(err);
       setActionError(msg);
       toastError(msg);
       setIsDeleting(false);
@@ -173,7 +174,7 @@ export default function PostDetailPage() {
       setPost(updated);
       success("Post published successfully!");
     } catch (err: any) {
-      const msg = err?.message || "Failed to publish post";
+      const msg = describeApiError(err);
       setActionError(msg);
       toastError(msg);
     } finally {
@@ -210,7 +211,7 @@ export default function PostDetailPage() {
       setEditCommentText("");
       success("Comment updated!");
     } catch (err: any) {
-      toastError(err?.message || "Failed to update comment");
+      toastError(describeApiError(err));
     } finally {
       setIsSavingComment(false);
     }
@@ -229,7 +230,7 @@ export default function PostDetailPage() {
       setComments((prev) => prev.filter((c) => c.id !== commentId));
       info("Comment deleted");
     } catch (err: any) {
-      toastError(err?.message || "Failed to delete comment");
+      toastError(describeApiError(err));
     } finally {
       setDeletingCommentId(null);
     }

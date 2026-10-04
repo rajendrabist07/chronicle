@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { createPostSchema, type CreatePostInput } from "../../lib/validation";
 import { createPost } from "../../lib/posts";
 import { getAccessToken } from "../../lib/auth";
+import { describeApiError } from "../../lib/errors";
 import { createTag, attachTagsToPost } from "../../lib/tags";
 import MarkdownEditor from "../../components/editor/MarkdownEditor";
 import AIAssistantPanel from "../../components/ai/AIAssistantPanel";
@@ -121,7 +122,7 @@ function NewPostContent() {
       success(submitStatus === "PUBLISHED" ? "Article published!" : "Draft saved!");
       router.push(`/posts/${post.id}`);
     } catch (err: any) {
-      const msg = err?.message || "Failed to create post";
+      const msg = describeApiError(err);
       setServerError(msg);
       toastError(msg);
     } finally {

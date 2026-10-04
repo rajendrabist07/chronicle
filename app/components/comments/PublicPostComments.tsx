@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useAuth } from "../../context/AuthContext";
 import { createComment, type Comment } from "../../lib/comments";
 import { getAccessToken } from "../../lib/auth";
+import { describeApiError } from "../../lib/errors";
 import { formatRelativeTime } from "../../lib/time";
 import Avatar from "../ui/Avatar";
 import Button from "../ui/Button";
@@ -51,7 +52,7 @@ export default function PublicPostComments({
       setContent("");
       success("Comment posted successfully!");
     } catch (err: any) {
-      setError(err?.message || "Failed to post comment");
+      setError(describeApiError(err));
     } finally {
       setIsSubmitting(false);
     }
@@ -87,7 +88,7 @@ export default function PublicPostComments({
       setReplyingToId(null);
       success("Reply posted!");
     } catch (err: any) {
-      toastError(err?.message || "Failed to post reply");
+      toastError(describeApiError(err));
     } finally {
       setIsSubmittingReply(false);
     }

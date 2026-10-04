@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { suggestContent, type AiSuggestions } from "../../lib/ai";
 import { getAccessToken } from "../../lib/auth";
+import { describeApiError } from "../../lib/errors";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Badge from "../ui/Badge";
@@ -73,7 +74,7 @@ export default function AIAssistantPanel({
       setSuggestions(data);
       success("AI suggestions generated!");
     } catch (err: any) {
-      const msg = err?.message || "Failed to generate suggestions";
+      const msg = describeApiError(err);
       setSuggestError(msg);
       toastError(msg);
     } finally {
@@ -108,7 +109,7 @@ export default function AIAssistantPanel({
       }
       success(`Content polished for ${tone} tone!`);
     } catch (err: any) {
-      toastError(err?.message || "Failed to improve content");
+      toastError(describeApiError(err));
     } finally {
       setIsImproving(false);
     }
@@ -137,7 +138,7 @@ export default function AIAssistantPanel({
       setGeneratedOutline(outline);
       success("Outline generated!");
     } catch (err: any) {
-      toastError(err?.message || "Failed to generate outline");
+      toastError(describeApiError(err));
     } finally {
       setIsOutlining(false);
     }

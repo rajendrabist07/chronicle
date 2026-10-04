@@ -1,8 +1,19 @@
-import { notFound } from "next/navigation";
 import type { Post, PaginatedResponse, ApiSuccessResponse } from "../types";
 import type { Comment } from "./comments";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://content-platform-e3tj.onrender.com/api/v1";
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL || "https://content-platform-e3tj.onrender.com/api/v1";
+
+export const PUBLIC_FETCH_TIMEOUT_MS = 10000; // 10s timeout to prevent hung renders
+
+export class PublicApiError extends Error {
+  public status: number;
+  constructor(message: string, status = 500) {
+    super(message);
+    this.name = "PublicApiError";
+    this.status = status;
+  }
+}
 
 export interface PublicUser {
   id: string;
@@ -31,8 +42,69 @@ export interface PublicPostQueryParams {
   sort?: string;
 }
 
+/**
+ * Executes a resilient server-side fetch with timeout and safe JSON handling.
+ * Throws PublicApiError on non-2xx so Next.js does not cache failed responses.
+ */
+async function publicFetch<T>(
+  endpoint: string,
+  options: RequestInit = {}
+): Promise<{ ok: boolean; status: number; data: T | null }> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), PUBLIC_FETCH_TIMEOUT_MS);
+
+  try {
+    const res = await fetch(`${API_URL}${endpoint}`, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        "Accept": "application/json",
+        ...(options.headers || {}),
+      },
+    });
+
+    clearTimeout(timeoutId);
+
+    if (res.status === 404) {
+      return { ok: false, status: 404, data: null };
+    }
+
+    // Try to safely parse response body
+    let json: any = null;
+    const contentType = res.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) {
+      try {
+        json = await res.json();
+      } catch {
+        json = null;
+      }
+    }
+
+    if (!res.ok) {
+      const message =
+        json?.message ||
+        `Server returned HTTP ${res.status} (${res.statusText || "Error"})`;
+      throw new PublicApiError(message, res.status);
+    }
+
+    return { ok: true, status: res.status, data: json as T };
+  } catch (err: any) {
+    clearTimeout(timeoutId);
+    if (err instanceof PublicApiError) {
+      throw err;
+    }
+    if (err?.name === "AbortError") {
+      throw new PublicApiError("Request timed out while waiting for server response", 504);
+    }
+    throw new PublicApiError(
+      err?.message || "Failed to communicate with public API",
+      503
+    );
+  }
+}
+
 export async function getPublicPosts(
-  params: PublicPostQueryParams = {},
+  params: PublicPostQueryParams = {}
 ): Promise<PaginatedResponse<Post>> {
   const query = new URLSearchParams();
   if (params.page) query.set("page", params.page.toString());
@@ -41,114 +113,95 @@ export async function getPublicPosts(
   if (params.tag) query.set("tag", params.tag);
   if (params.sort) query.set("sort", params.sort);
 
-  try {
-    const res = await fetch(`${API_URL}/public/posts?${query.toString()}`, {
-      next: { revalidate: 60 },
-    });
+  const qs = query.toString();
+  const endpoint = `/public/posts${qs ? `?${qs}` : ""}`;
 
-    if (!res.ok) {
-      if (res.status === 404) notFound();
-      // Fallback response on backend cold start/unreachable
-      return {
-        success: true,
-        data: [],
-        pagination: { page: 1, limit: 10, total: 0, totalPages: 1 },
-      };
-    }
+  const res = await publicFetch<PaginatedResponse<Post>>(endpoint, {
+    next: { revalidate: 60 },
+  });
 
-    return await res.json();
-  } catch {
+  if (res.status === 404 || !res.data) {
     return {
       success: true,
       data: [],
       pagination: { page: 1, limit: 10, total: 0, totalPages: 1 },
     };
   }
+
+  return res.data;
 }
 
 export async function getPublicPostBySlug(slug: string): Promise<Post | null> {
-  try {
-    const res = await fetch(`${API_URL}/public/posts/${encodeURIComponent(slug)}`, {
+  const res = await publicFetch<ApiSuccessResponse<Post>>(
+    `/public/posts/${encodeURIComponent(slug)}`,
+    {
       next: { revalidate: 60 },
-    });
-
-    if (res.status === 404) {
-      return null;
     }
+  );
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch post: ${res.status}`);
-    }
-
-    const json: ApiSuccessResponse<Post> = await res.json();
-    return json.data;
-  } catch (err) {
-    console.error("Public post fetch error:", err);
+  if (res.status === 404 || !res.data) {
     return null;
   }
+
+  return res.data.data;
 }
 
 export async function getPublicPostComments(slug: string): Promise<Comment[]> {
-  try {
-    const res = await fetch(
-      `${API_URL}/public/posts/${encodeURIComponent(slug)}/comments`,
-      {
-        next: { revalidate: 60 },
-      },
-    );
+  const res = await publicFetch<ApiSuccessResponse<Comment[]>>(
+    `/public/posts/${encodeURIComponent(slug)}/comments`,
+    {
+      next: { revalidate: 60 },
+    }
+  );
 
-    if (!res.ok) return [];
-    const json: ApiSuccessResponse<Comment[]> = await res.json();
-    return json.data || [];
-  } catch {
+  if (res.status === 404 || !res.data) {
     return [];
   }
+
+  return res.data.data || [];
 }
 
 export async function getPublicTags(): Promise<PublicTag[]> {
-  try {
-    const res = await fetch(`${API_URL}/public/tags`, {
-      next: { revalidate: 300 },
-    });
+  const res = await publicFetch<ApiSuccessResponse<PublicTag[]>>("/public/tags", {
+    next: { revalidate: 300 },
+  });
 
-    if (!res.ok) return [];
-    const json: ApiSuccessResponse<PublicTag[]> = await res.json();
-    return json.data || [];
-  } catch {
+  if (res.status === 404 || !res.data) {
     return [];
   }
+
+  return res.data.data || [];
 }
 
 export async function getPublicUser(id: string): Promise<PublicUser | null> {
-  try {
-    const res = await fetch(`${API_URL}/public/users/${encodeURIComponent(id)}`, {
+  const res = await publicFetch<ApiSuccessResponse<PublicUser>>(
+    `/public/users/${encodeURIComponent(id)}`,
+    {
       next: { revalidate: 60 },
-    });
+    }
+  );
 
-    if (res.status === 404) return null;
-    if (!res.ok) return null;
-
-    const json: ApiSuccessResponse<PublicUser> = await res.json();
-    return json.data;
-  } catch {
+  if (res.status === 404 || !res.data) {
     return null;
   }
+
+  return res.data.data;
 }
 
 export async function getPublicSitemap(): Promise<
   { slug: string; updatedAt: string }[]
 > {
-  try {
-    const res = await fetch(`${API_URL}/public/sitemap`, {
-      next: { revalidate: 3600 },
-    });
-    if (!res.ok) return [];
-    const json: ApiSuccessResponse<{ slug: string; updatedAt: string }[]> =
-      await res.json();
-    return json.data || [];
-  } catch {
+  const res = await publicFetch<
+    ApiSuccessResponse<{ slug: string; updatedAt: string }[]>
+  >("/public/sitemap", {
+    next: { revalidate: 3600 },
+  });
+
+  if (res.status === 404 || !res.data) {
     return [];
   }
+
+  return res.data.data || [];
 }
 
 /**
