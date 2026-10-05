@@ -7,15 +7,19 @@ import Card from "./components/ui/Card";
 import Badge from "./components/ui/Badge";
 import Avatar from "./components/ui/Avatar";
 import JsonLd from "./components/seo/JsonLd";
+import InteractiveFeaturePreview from "./components/home/InteractiveFeaturePreview";
+import { TrustLevelBadge, ReviewStatusBadge } from "./components/trust/TrustBadge";
 import {
   Sparkles,
-  MessageSquare,
-  Tags,
   ShieldCheck,
+  BrainCircuit,
   ArrowRight,
-  PenTool,
   BookOpen,
   Compass,
+  CheckCircle2,
+  Terminal,
+  Layers,
+  Search,
 } from "lucide-react";
 
 export default async function HomePage() {
@@ -23,7 +27,7 @@ export default async function HomePage() {
   let fetchFailed = false;
 
   try {
-    const postsResponse = await getPublicPosts({ limit: 3 });
+    const postsResponse = await getPublicPosts({ limit: 6 });
     latestPosts = postsResponse.data || [];
   } catch (err) {
     fetchFailed = true;
@@ -51,34 +55,44 @@ export default async function HomePage() {
     logo: `${SITE_CONFIG.url}/icon.svg`,
   };
 
+  const featuredTopics = [
+    { name: "TypeScript", tag: "typescript" },
+    { name: "Next.js", tag: "nextjs" },
+    { name: "System Design", tag: "system-design" },
+    { name: "PostgreSQL", tag: "postgres" },
+    { name: "Architecture", tag: "architecture" },
+    { name: "DevOps", tag: "devops" },
+    { name: "React", tag: "react" },
+  ];
+
   return (
-    <div className="flex flex-col gap-16 pb-16">
+    <div className="flex flex-col gap-20 pb-20">
       <JsonLd data={websiteSchema} />
       <JsonLd data={organizationSchema} />
 
       {/* Hero Section */}
       <section className="relative overflow-hidden border-b border-slate-200/80 bg-gradient-to-b from-slate-50 via-white to-white py-20 transition-colors dark:border-slate-800/80 dark:from-slate-900/50 dark:via-slate-950 dark:to-slate-950">
         <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">
-          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3.5 py-1 text-xs font-semibold text-blue-700 shadow-xs dark:border-blue-900/60 dark:bg-blue-950/50 dark:text-blue-300">
+          <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-4 py-1.5 text-xs font-semibold text-blue-700 shadow-xs dark:border-blue-900/60 dark:bg-blue-950/50 dark:text-blue-300">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>Powered by {SITE_CONFIG.aiProvider} AI</span>
+            <span>Powered by {SITE_CONFIG.aiProvider} · Grounded Engineering Knowledge</span>
           </div>
 
-          <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl dark:text-white">
-            Publish ideas that matter. <br />
-            <span className="bg-gradient-to-r from-blue-600 to-indigo-600 bg-clip-text text-transparent dark:from-blue-400 dark:to-indigo-400">
-              Enhanced by Intelligence.
+          <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl dark:text-white leading-[1.15]">
+            Technical writing you can trust — <br />
+            <span className="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent dark:from-blue-400 dark:via-indigo-400 dark:to-purple-400">
+              and learn from.
             </span>
           </h1>
 
-          <p className="mx-auto mt-6 max-w-2xl text-base text-slate-600 sm:text-lg dark:text-slate-300">
+          <p className="mx-auto mt-6 max-w-2xl text-base text-slate-600 sm:text-lg dark:text-slate-300 leading-relaxed">
             {SITE_CONFIG.description}
           </p>
 
           <div className="mt-8 flex flex-wrap justify-center gap-3">
             <Link href="/register">
               <Button size="lg" className="shadow-md">
-                <span>Start Writing for Free</span>
+                <span>Start Writing</span>
                 <ArrowRight className="h-4 w-4" />
               </Button>
             </Link>
@@ -89,121 +103,120 @@ export default async function HomePage() {
               </Button>
             </Link>
           </div>
+
+          {/* Quick Topic Chips */}
+          <div className="mt-10 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+            <span className="font-semibold text-slate-700 dark:text-slate-300">Trending Topics:</span>
+            {featuredTopics.map((topic) => (
+              <Link
+                key={topic.tag}
+                href={`/tags/${encodeURIComponent(topic.tag)}`}
+                className="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-800 dark:hover:text-blue-400"
+              >
+                #{topic.name}
+              </Link>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* How it Works (3 Steps) */}
+      {/* Interactive Core Thesis Preview (Comprehension + Trust) */}
       <section className="mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="text-center">
+        <div className="text-center mb-8">
           <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
-            How {SITE_CONFIG.name} Works
+            Experience the Two Layers of Chronicle
           </h2>
-          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-            A frictionless workflow designed for writers, engineers, and creators.
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400 max-w-xl mx-auto">
+            Try the interactive comprehension quiz and explore how trust levels protect reading quality in real-time.
           </p>
         </div>
 
-        <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-3">
-          <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 font-bold text-blue-600 dark:bg-blue-950 dark:text-blue-400">
-              1
-            </div>
-            <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">
-              Write in Markdown
-            </h3>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Compose cleanly with live sanitized preview, formatting shortcuts, and local draft autosave.
-            </p>
-          </div>
-
-          <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 font-bold text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
-              2
-            </div>
-            <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">
-              Supercharge with AI
-            </h3>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Get catchy title suggestions, concise summaries, and smart tag categorization in one click.
-            </p>
-          </div>
-
-          <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-xs dark:border-slate-800 dark:bg-slate-900">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 font-bold text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
-              3
-            </div>
-            <h3 className="mt-4 text-base font-bold text-slate-900 dark:text-white">
-              Publish & Engage
-            </h3>
-            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-              Reach readers with high-performance SEO pages, social share cards, and nested discussions.
-            </p>
-          </div>
-        </div>
+        <InteractiveFeaturePreview />
       </section>
 
-      {/* Featured Features Grid */}
+      {/* Core Architectural Pillars */}
       <section className="mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <Card className="flex flex-col justify-between p-6">
+        <div className="text-center mb-12">
+          <h2 className="text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl dark:text-white">
+            Why Technical Writers Choose {SITE_CONFIG.name}
+          </h2>
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
+            Designed from the ground up for high-signal engineering and active reader retention.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <Card className="p-6 flex flex-col justify-between border-slate-200 dark:border-slate-800">
             <div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400">
-                <Sparkles className="h-5 w-5" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600 dark:bg-blue-950 dark:text-blue-400 mb-4">
+                <BrainCircuit className="h-5 w-5" />
               </div>
-              <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
-                Gemini AI Writing Companion
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                Active Comprehension
               </h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Overcome writer&apos;s block instantly. Generate structured outlines, polish tone, and discover relevant tags from your content.
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Articles can include embedded check-your-understanding quizzes and grounded Q&A with verbatim text citations.
               </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-blue-600 dark:text-blue-400 font-medium">
+              Zero fluff retention
             </div>
           </Card>
 
-          <Card className="flex flex-col justify-between p-6">
+          <Card className="p-6 flex flex-col justify-between border-slate-200 dark:border-slate-800">
             <div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400">
-                <MessageSquare className="h-5 w-5" />
-              </div>
-              <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
-                Threaded Community Discussions
-              </h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Engage in structured conversations on any article with inline comment editing, replies, and author identity badges.
-              </p>
-            </div>
-          </Card>
-
-          <Card className="flex flex-col justify-between p-6">
-            <div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400">
-                <Tags className="h-5 w-5" />
-              </div>
-              <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
-                Multi-Dimensional Tagging
-              </h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Organize and explore stories across topics, engineering domains, and categories with automatic slug matching.
-              </p>
-            </div>
-          </Card>
-
-          <Card className="flex flex-col justify-between p-6">
-            <div>
-              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-950 dark:text-violet-400">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-purple-100 text-purple-600 dark:bg-purple-950 dark:text-purple-400 mb-4">
                 <ShieldCheck className="h-5 w-5" />
               </div>
-              <h3 className="mt-4 text-lg font-bold text-slate-900 dark:text-white">
-                JWT Auth & Role Permissions
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                Transparent Trust Model
               </h3>
-              <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
-                Hardened authentication with mutex-safe token refresh, bcrypt hashing, and Owner/Admin/Member role hierarchies.
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Verified writer levels, peer review audit badges, and clear identity without paywalls or algorithmic clickbait.
               </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-purple-600 dark:text-purple-400 font-medium">
+              High signal reputation
+            </div>
+          </Card>
+
+          <Card className="p-6 flex flex-col justify-between border-slate-200 dark:border-slate-800">
+            <div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-indigo-100 text-indigo-600 dark:bg-indigo-950 dark:text-indigo-400 mb-4">
+                <Sparkles className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                {SITE_CONFIG.aiProvider} Companion
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Generate catchy title suggestions, concise technical summaries, and auto-generated comprehension quizzes.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-indigo-600 dark:text-indigo-400 font-medium">
+              AI as an editor, not author
+            </div>
+          </Card>
+
+          <Card className="p-6 flex flex-col justify-between border-slate-200 dark:border-slate-800">
+            <div>
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950 dark:text-emerald-400 mb-4">
+                <Terminal className="h-5 w-5" />
+              </div>
+              <h3 className="text-base font-bold text-slate-900 dark:text-white mb-2">
+                Developer Native
+              </h3>
+              <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                Full GitHub Flavored Markdown, code syntax highlighting, keyboard shortcuts, autosaved drafts, and sanitized output.
+              </p>
+            </div>
+            <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 text-[11px] text-emerald-600 dark:text-emerald-400 font-medium">
+              Built for engineering
             </div>
           </Card>
         </div>
       </section>
 
-      {/* Latest Public Articles */}
+      {/* Latest High-Signal Articles */}
       <section className="mx-auto max-w-5xl px-4 sm:px-6">
         <div className="flex items-center justify-between border-b border-slate-200 pb-4 dark:border-slate-800">
           <div>
@@ -211,7 +224,7 @@ export default async function HomePage() {
               Latest Published Articles
             </h2>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Discover stories, tutorials, and perspectives from the community.
+              Explore deep dives, tutorials, and system designs from the community.
             </p>
           </div>
           <Link
@@ -252,18 +265,22 @@ export default async function HomePage() {
             </div>
           </div>
         ) : (
-          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-3">
+          <div className="mt-6 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {latestPosts.map((post) => (
               <Card
                 key={post.id}
                 className="flex flex-col justify-between transition-transform hover:-translate-y-1"
               >
                 <div>
-                  <div className="flex items-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-                    <Avatar name={post.authorName || "Author"} size="xs" />
-                    <span>{post.authorName || "Anonymous"}</span>
-                    <span>·</span>
-                    <span>{calculateReadingTime(post.content)}</span>
+                  <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
+                    <Link
+                      href={`/u/${post.authorId}`}
+                      className="flex items-center gap-2 hover:underline truncate"
+                    >
+                      <Avatar name={post.authorName || "Author"} size="xs" />
+                      <span className="truncate">{post.authorName || "Anonymous"}</span>
+                    </Link>
+                    <span className="shrink-0">{calculateReadingTime(post.content)}</span>
                   </div>
 
                   <Link href={`/read/${post.slug || post.id}`} className="group block mt-3">
@@ -276,15 +293,23 @@ export default async function HomePage() {
                   </Link>
                 </div>
 
-                {post.tags && post.tags.length > 0 && (
-                  <div className="mt-4 flex flex-wrap gap-1.5 pt-3 border-t border-slate-100 dark:border-slate-800">
-                    {post.tags.slice(0, 2).map((tag) => (
-                      <Badge key={tag.id} variant="neutral" className="max-w-[120px] truncate">
-                        {tag.name}
-                      </Badge>
-                    ))}
+                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex flex-wrap gap-1 overflow-hidden">
+                      {post.tags?.slice(0, 2).map((tag) => (
+                        <Badge key={tag.id} variant="neutral" className="max-w-[120px] truncate">
+                          #{tag.name}
+                        </Badge>
+                      ))}
+                    </div>
+                    <time
+                      dateTime={post.publishedAt || post.createdAt}
+                      className="shrink-0 text-[11px] text-slate-400"
+                    >
+                      {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
+                    </time>
                   </div>
-                )}
+                </div>
               </Card>
             ))}
           </div>
@@ -293,7 +318,7 @@ export default async function HomePage() {
 
       {/* Bottom CTA Banner */}
       <section className="mx-auto max-w-5xl px-4 sm:px-6">
-        <div className="rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 p-8 text-center text-white shadow-lg sm:p-12">
+        <div className="rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 p-8 text-center text-white shadow-lg sm:p-12">
           <h2 className="text-2xl font-bold tracking-tight sm:text-4xl">
             Ready to publish your next piece?
           </h2>
@@ -304,7 +329,7 @@ export default async function HomePage() {
             <Link href="/register">
               <Button
                 size="lg"
-                className="bg-white text-blue-700 hover:bg-blue-50 shadow-md"
+                className="bg-white text-blue-700 hover:bg-blue-50 shadow-md font-semibold"
               >
                 Get Started Now
               </Button>
