@@ -6,6 +6,7 @@ import { SITE_CONFIG } from "../../lib/site";
 import Avatar from "../../components/ui/Avatar";
 import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
+import { TrustLevelBadge } from "../../components/trust/TrustBadge";
 import EmptyState from "../../components/ui/EmptyState";
 import JsonLd from "../../components/seo/JsonLd";
 import { ArrowLeft, Calendar, FileText } from "lucide-react";
@@ -101,16 +102,19 @@ export default async function UserProfilePage({ params }: UserProfilePageProps) 
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-start">
           <Avatar name={user.name} size="xl" />
           <div className="flex-1 text-center sm:text-left">
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
-              {user.name}
-            </h1>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2.5">
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
+                {user.name}
+              </h1>
+              <TrustLevelBadge level="verified" size="md" />
+            </div>
             {user.bio ? (
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 {user.bio}
               </p>
             ) : (
               <p className="mt-2 text-xs italic text-slate-400">
-                Author at Chronicle
+                Technical Writer at Chronicle
               </p>
             )}
 

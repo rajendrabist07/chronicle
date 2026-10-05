@@ -13,6 +13,7 @@ import Textarea from "../components/ui/Textarea";
 import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
 import Tabs from "../components/ui/Tabs";
+import { TrustLevelBadge } from "../components/trust/TrustBadge";
 import { useToast } from "../components/ui/Toast";
 import {
   User,
@@ -313,10 +314,11 @@ function SettingsContent() {
         <div className="rounded-lg border border-slate-200 p-4 dark:border-slate-800">
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
             <Shield className="h-4 w-4" />
-            Role & Permissions
+            Role & Trust Status
           </div>
-          <div className="mt-2 flex items-center gap-2">
+          <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge variant="primary">{user?.role || "MEMBER"}</Badge>
+            <TrustLevelBadge level="verified" size="sm" />
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800/60">
             <span className="text-xs text-slate-500">User ID</span>
