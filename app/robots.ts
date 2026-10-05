@@ -1,8 +1,8 @@
 import type { MetadataRoute } from "next";
-import { SITE_CONFIG } from "./lib/site";
+import { getSiteUrl } from "./lib/site";
 
 export default function robots(): MetadataRoute.Robots {
-  const siteUrl = SITE_CONFIG.url;
+  const siteUrl = getSiteUrl();
 
   return {
     rules: [

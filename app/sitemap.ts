@@ -1,11 +1,11 @@
 import type { MetadataRoute } from "next";
-import { SITE_CONFIG } from "./lib/site";
+import { getSiteUrl } from "./lib/site";
 import { getPublicSitemap, getPublicTags } from "./lib/public";
 
 export const revalidate = 3600;
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const siteUrl = SITE_CONFIG.url;
+  const siteUrl = getSiteUrl();
   const now = new Date();
 
   // Core static routes

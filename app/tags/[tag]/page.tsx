@@ -19,16 +19,36 @@ interface TagPageProps {
 export async function generateMetadata({ params }: TagPageProps): Promise<Metadata> {
   const { tag } = await params;
   const decodedTag = decodeURIComponent(tag);
+  const tagUrl = `/tags/${encodeURIComponent(tag)}`;
 
   return {
     title: `#${decodedTag} Articles`,
     description: `Discover articles, stories, and engineering guides tagged with #${decodedTag} on ${SITE_CONFIG.name}.`,
     alternates: {
-      canonical: `/tags/${encodeURIComponent(tag)}`,
+      canonical: tagUrl,
     },
     openGraph: {
+      type: "website",
+      siteName: SITE_CONFIG.name,
+      locale: "en_US",
       title: `#${decodedTag} Articles — ${SITE_CONFIG.name}`,
       description: `Explore published posts filed under #${decodedTag}.`,
+      url: tagUrl,
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: `#${decodedTag} Articles on ${SITE_CONFIG.name}`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `#${decodedTag} Articles — ${SITE_CONFIG.name}`,
+      description: `Explore published posts filed under #${decodedTag}.`,
+      images: ["/og-image.png"],
+      ...(SITE_CONFIG.twitterHandle ? { creator: SITE_CONFIG.twitterHandle } : {}),
     },
   };
 }
@@ -137,19 +157,19 @@ export default async function TagPage({ params }: TagPageProps) {
               </div>
 
               <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
-                <div className="flex items-center justify-between">
-                  <div className="flex flex-wrap gap-1">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex flex-wrap gap-1 overflow-hidden">
                     {post.tags?.slice(0, 2).map((t) => (
-                      <Badge key={t.id} variant="neutral">
+                      <Badge key={t.id} variant="neutral" className="max-w-[140px] truncate">
                         #{t.name}
                       </Badge>
                     ))}
                   </div>
                   <time
-                    dateTime={post.createdAt}
-                    className="text-[11px] text-slate-400"
+                    dateTime={post.publishedAt || post.createdAt}
+                    className="shrink-0 text-[11px] text-slate-400"
                   >
-                    {new Date(post.createdAt).toLocaleDateString()}
+                    {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
                   </time>
                 </div>
               </div>

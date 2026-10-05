@@ -1,9 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import Logo from "./brand/Logo";
 import { SITE_CONFIG } from "../lib/site";
+import { useAuth } from "../context/AuthContext";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
+  const { user } = useAuth();
+  const isAuthenticated = Boolean(user);
 
   return (
     <footer className="mt-auto border-t border-slate-200 bg-white transition-colors dark:border-slate-800 dark:bg-slate-950">
@@ -23,23 +28,22 @@ export default function Footer() {
             <Link href="/explore" className="hover:text-blue-600 dark:hover:text-blue-400">
               Explore
             </Link>
-            <Link href="/posts" className="hover:text-blue-600 dark:hover:text-blue-400">
-              My Posts
-            </Link>
+            {isAuthenticated && (
+              <Link href="/posts" className="hover:text-blue-600 dark:hover:text-blue-400">
+                My Posts
+              </Link>
+            )}
             <Link href="/privacy" className="hover:text-blue-600 dark:hover:text-blue-400">
               Privacy Policy
             </Link>
             <Link href="/terms" className="hover:text-blue-600 dark:hover:text-blue-400">
               Terms of Service
             </Link>
-            <Link href="/design-system" className="hover:text-blue-600 dark:hover:text-blue-400">
-              Design System
-            </Link>
           </nav>
         </div>
 
         <div className="mt-8 border-t border-slate-100 pt-6 text-center text-xs text-slate-400 dark:border-slate-900 dark:text-slate-500">
-          <p>© {currentYear} {SITE_CONFIG.name}. Built with Next.js, Tailwind CSS & Google Gemini.</p>
+          <p>© {currentYear} {SITE_CONFIG.name}. Built with Next.js, Tailwind CSS & {SITE_CONFIG.aiProvider}.</p>
         </div>
       </div>
     </footer>

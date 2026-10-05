@@ -61,7 +61,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-5xl px-4 text-center sm:px-6">
           <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50/80 px-3.5 py-1 text-xs font-semibold text-blue-700 shadow-xs dark:border-blue-900/60 dark:bg-blue-950/50 dark:text-blue-300">
             <Sparkles className="h-3.5 w-3.5" />
-            <span>Powered by Google Gemini 2.0 AI</span>
+            <span>Powered by {SITE_CONFIG.aiProvider} AI</span>
           </div>
 
           <h1 className="mt-6 text-4xl font-extrabold tracking-tight text-slate-900 sm:text-6xl dark:text-white">
@@ -279,7 +279,7 @@ export default async function HomePage() {
                 {post.tags && post.tags.length > 0 && (
                   <div className="mt-4 flex flex-wrap gap-1.5 pt-3 border-t border-slate-100 dark:border-slate-800">
                     {post.tags.slice(0, 2).map((tag) => (
-                      <Badge key={tag.id} variant="neutral">
+                      <Badge key={tag.id} variant="neutral" className="max-w-[120px] truncate">
                         {tag.name}
                       </Badge>
                     ))}
@@ -298,7 +298,7 @@ export default async function HomePage() {
             Ready to publish your next piece?
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-blue-100 sm:text-base">
-            Join thousands of writers sharing engineering knowledge, deep dives, and ideas.
+            Join thoughtful writers sharing engineering knowledge, deep dives, and ideas.
           </p>
           <div className="mt-6 flex justify-center gap-3">
             <Link href="/register">

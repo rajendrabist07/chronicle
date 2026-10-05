@@ -44,17 +44,29 @@ export async function generateMetadata({ params }: ReadPageProps): Promise<Metad
     },
     openGraph: {
       type: "article",
+      siteName: SITE_CONFIG.name,
+      locale: "en_US",
       title: post.title,
       description: excerpt,
       publishedTime: post.publishedAt || post.createdAt,
       authors: [post.authorName || SITE_CONFIG.name],
       tags: post.tags?.map((t) => t.name),
-      url: `${SITE_CONFIG.url}${canonicalUrl}`,
+      url: canonicalUrl,
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: post.title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title: post.title,
       description: excerpt,
+      images: ["/og-image.png"],
+      ...(SITE_CONFIG.twitterHandle ? { creator: SITE_CONFIG.twitterHandle } : {}),
     },
   };
 }
@@ -164,8 +176,8 @@ export default async function ReadPostPage({ params }: ReadPageProps) {
             <div className="flex items-center gap-4 text-xs text-slate-500 dark:text-slate-400">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3.5 w-3.5" />
-                <time dateTime={post.createdAt}>
-                  {new Date(post.createdAt).toLocaleDateString(undefined, {
+                <time dateTime={post.publishedAt || post.createdAt}>
+                  {new Date(post.publishedAt || post.createdAt).toLocaleDateString(undefined, {
                     year: "numeric",
                     month: "short",
                     day: "numeric",
@@ -184,7 +196,7 @@ export default async function ReadPostPage({ params }: ReadPageProps) {
             <div className="flex flex-wrap gap-2 pt-2">
               {post.tags.map((tag) => (
                 <Link key={tag.id} href={`/tags/${encodeURIComponent(tag.name)}`}>
-                  <Badge variant="primary" className="hover:opacity-80">
+                  <Badge variant="primary" className="max-w-[180px] truncate hover:opacity-80">
                     #{tag.name}
                   </Badge>
                 </Link>

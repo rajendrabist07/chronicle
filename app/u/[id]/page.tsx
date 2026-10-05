@@ -26,15 +26,36 @@ export async function generateMetadata({ params }: UserProfilePageProps): Promis
     };
   }
 
+  const userUrl = `/u/${encodeURIComponent(id)}`;
+
   return {
     title: `${user.name} — Author Profile`,
     description: user.bio || `Explore published articles and stories by ${user.name} on ${SITE_CONFIG.name}.`,
     alternates: {
-      canonical: `/u/${encodeURIComponent(id)}`,
+      canonical: userUrl,
     },
     openGraph: {
+      type: "profile",
+      siteName: SITE_CONFIG.name,
+      locale: "en_US",
       title: `${user.name} — Author Profile on ${SITE_CONFIG.name}`,
       description: user.bio || `Read articles written by ${user.name}.`,
+      url: userUrl,
+      images: [
+        {
+          url: "/og-image.png",
+          width: 1200,
+          height: 630,
+          alt: `${user.name} on ${SITE_CONFIG.name}`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${user.name} — Author Profile on ${SITE_CONFIG.name}`,
+      description: user.bio || `Read articles written by ${user.name}.`,
+      images: ["/og-image.png"],
+      ...(SITE_CONFIG.twitterHandle ? { creator: SITE_CONFIG.twitterHandle } : {}),
     },
   };
 }
@@ -150,19 +171,19 @@ export default async function UserProfilePage({ params }: UserProfilePageProps) 
                   </span>
                 </div>
 
-                <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800">
-                  <div className="flex flex-wrap gap-1">
+                <div className="mt-3 flex items-center justify-between gap-2 border-t border-slate-100 pt-3 dark:border-slate-800">
+                  <div className="flex flex-wrap gap-1 overflow-hidden">
                     {post.tags?.map((t) => (
-                      <Badge key={t.id} variant="neutral">
+                      <Badge key={t.id} variant="neutral" className="max-w-[140px] truncate">
                         #{t.name}
                       </Badge>
                     ))}
                   </div>
                   <time
-                    dateTime={post.createdAt}
-                    className="text-[11px] text-slate-400"
+                    dateTime={post.publishedAt || post.createdAt}
+                    className="shrink-0 text-[11px] text-slate-400"
                   >
-                    {new Date(post.createdAt).toLocaleDateString()}
+                    {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
                   </time>
                 </div>
               </Card>

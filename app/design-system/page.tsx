@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { notFound } from "next/navigation";
 import Button from "../components/ui/Button";
 import Badge from "../components/ui/Badge";
 import Input from "../components/ui/Input";
@@ -308,6 +309,13 @@ function DesignSystemContent() {
 }
 
 export default function DesignSystemPage() {
+  if (
+    process.env.NODE_ENV === "production" &&
+    process.env.NEXT_PUBLIC_ENABLE_DESIGN_SYSTEM !== "true"
+  ) {
+    notFound();
+  }
+
   return (
     <ToastProvider>
       <DesignSystemContent />

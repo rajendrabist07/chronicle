@@ -6,7 +6,7 @@ import { ToastProvider } from "./components/ui/Toast";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import UnverifiedEmailBanner from "./components/auth/UnverifiedEmailBanner";
-import { SITE_CONFIG } from "./lib/site";
+import { SITE_CONFIG, getSiteUrl, validateSiteUrlConfig } from "./lib/site";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -20,7 +20,8 @@ const geistMono = Geist_Mono({
   display: "swap",
 });
 
-const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || SITE_CONFIG.url;
+validateSiteUrlConfig();
+const siteUrl = getSiteUrl();
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
@@ -43,13 +44,22 @@ export const metadata: Metadata = {
     siteName: SITE_CONFIG.name,
     title: `${SITE_CONFIG.name} — ${SITE_CONFIG.tagline}`,
     description: SITE_CONFIG.description,
+    images: [
+      {
+        url: `${siteUrl}/opengraph-image`,
+        width: 1200,
+        height: 630,
+        alt: SITE_CONFIG.ogImageAlt,
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: `${SITE_CONFIG.name} — ${SITE_CONFIG.tagline}`,
     description: SITE_CONFIG.description,
-    creator: SITE_CONFIG.twitterHandle,
-    site: SITE_CONFIG.twitterHandle,
+    ...(SITE_CONFIG.twitterHandle
+      ? { creator: SITE_CONFIG.twitterHandle, site: SITE_CONFIG.twitterHandle }
+      : {}),
   },
   icons: {
     icon: "/icon.svg",

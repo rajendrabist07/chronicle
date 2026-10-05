@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublicPosts, getPublicTags, calculateReadingTime } from "../lib/public";
 import { formatRelativeTime } from "../lib/time";
-import { SITE_CONFIG } from "../lib/site";
+import { SITE_CONFIG, getSiteUrl } from "../lib/site";
 import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
 import Avatar from "../components/ui/Avatar";
@@ -24,16 +24,47 @@ interface ExplorePageProps {
 export async function generateMetadata({ searchParams }: ExplorePageProps): Promise<Metadata> {
   const resolved = await searchParams;
   const isSearching = Boolean(resolved.q);
+  const siteUrl = getSiteUrl();
+
+  const title = resolved.tag
+    ? `#${resolved.tag} Articles — ${SITE_CONFIG.name}`
+    : `Explore Articles — ${SITE_CONFIG.name}`;
+  const description =
+    "Discover in-depth engineering posts, tutorials, and community perspectives on Chronicle.";
+  const canonicalUrl = resolved.tag
+    ? `/explore?tag=${encodeURIComponent(resolved.tag)}`
+    : "/explore";
 
   return {
-    title: resolved.tag ? `#${resolved.tag} Articles — Explore` : "Explore Articles",
-    description: "Discover public engineering articles, tutorials, and community perspectives.",
+    title,
+    description,
     alternates: {
-      canonical: "/explore",
+      canonical: canonicalUrl,
     },
     robots: isSearching
       ? { index: false, follow: true }
       : { index: true, follow: true },
+    openGraph: {
+      type: "website",
+      locale: "en_US",
+      url: `${siteUrl}${canonicalUrl}`,
+      siteName: SITE_CONFIG.name,
+      title,
+      description,
+      images: [
+        {
+          url: `${siteUrl}/opengraph-image`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
   };
 }
 
@@ -116,7 +147,12 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
                 variant={activeTag === tag.name ? "primary" : "secondary"}
                 className="cursor-pointer hover:opacity-80"
               >
-                #{tag.name}
+                <span
+                  className="inline-block max-w-[140px] truncate align-bottom"
+                  title={`#${tag.name}`}
+                >
+                  #{tag.name}
+                </span>
               </Badge>
             </Link>
           ))}
@@ -146,62 +182,71 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
       ) : (
         <div className="space-y-8">
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
-            {posts.map((post) => (
-              <Card
-                key={post.id}
-                className="flex flex-col justify-between transition-all hover:-translate-y-1 hover:shadow-md"
-              >
-                <div>
-                  {/* Author Byline */}
-                  <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
-                    <Link
-                      href={`/u/${post.authorId}`}
-                      className="flex items-center gap-2 hover:underline"
-                    >
-                      <Avatar name={post.authorName || "Author"} size="xs" />
-                      <span className="font-medium text-slate-700 dark:text-slate-300">
-                        {post.authorName || "Anonymous"}
-                      </span>
-                    </Link>
-                    <span>{calculateReadingTime(post.content)}</span>
-                  </div>
-
-                  {/* Post Content & Title */}
-                  <Link
-                    href={`/read/${post.slug || post.id}`}
-                    className="group mt-3 block"
-                  >
-                    <h2 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400 line-clamp-2">
-                      {post.title}
-                    </h2>
-                    <p className="mt-2 text-xs text-slate-600 line-clamp-3 dark:text-slate-300">
-                      {post.content}
-                    </p>
-                  </Link>
-                </div>
-
-                {/* Tags & Date footer */}
-                <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
-                  <div className="flex items-center justify-between">
-                    <div className="flex flex-wrap gap-1">
-                      {post.tags?.slice(0, 2).map((t) => (
-                        <Link key={t.id} href={createFilterUrl(1, t.name)}>
-                          <Badge variant="neutral" className="hover:opacity-80">
-                            #{t.name}
-                          </Badge>
-                        </Link>
-                      ))}
+            {posts.map((post) => {
+              const displayDate = post.publishedAt || post.createdAt;
+              return (
+                <Card
+                  key={post.id}
+                  className="flex flex-col justify-between transition-all hover:-translate-y-1 hover:shadow-md"
+                >
+                  <div>
+                    {/* Author Byline */}
+                    <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
+                      <Link
+                        href={`/u/${post.authorId}`}
+                        className="flex items-center gap-2 hover:underline"
+                      >
+                        <Avatar name={post.authorName || "Author"} size="xs" />
+                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                          {post.authorName || "Anonymous"}
+                        </span>
+                      </Link>
+                      <span>{calculateReadingTime(post.content)}</span>
                     </div>
-                    <time
-                      dateTime={post.createdAt}
-                      className="text-[11px] text-slate-400"
+
+                    {/* Post Content & Title */}
+                    <Link
+                      href={`/read/${post.slug || post.id}`}
+                      className="group mt-3 block"
                     >
-                      {formatRelativeTime(post.createdAt)}
-                    </time>
+                      <h2 className="text-lg font-bold text-slate-900 group-hover:text-blue-600 dark:text-white dark:group-hover:text-blue-400 line-clamp-2">
+                        {post.title}
+                      </h2>
+                      <p className="mt-2 text-xs text-slate-600 line-clamp-3 dark:text-slate-300">
+                        {post.content}
+                      </p>
+                    </Link>
                   </div>
-                </div>
-              </Card>
-            ))}
+
+                  {/* Tags & Date footer */}
+                  <div className="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-wrap gap-1">
+                        {post.tags?.slice(0, 2).map((t) => (
+                          <Link key={t.id} href={createFilterUrl(1, t.name)}>
+                            <Badge variant="neutral" className="hover:opacity-80">
+                              <span
+                                className="inline-block max-w-[100px] truncate align-bottom"
+                                title={`#${t.name}`}
+                              >
+                                #{t.name}
+                              </span>
+                            </Badge>
+                          </Link>
+                        ))}
+                      </div>
+                      <time
+                        dateTime={displayDate}
+                        className="text-[11px] text-slate-400"
+                        title={new Date(displayDate).toLocaleDateString()}
+                      >
+                        {formatRelativeTime(displayDate)}
+                      </time>
+                    </div>
+                  </div>
+                </Card>
+              );
+            })}
           </div>
 
           {/* Pagination */}
