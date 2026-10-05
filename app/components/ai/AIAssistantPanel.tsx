@@ -4,6 +4,7 @@ import { useState } from "react";
 import { suggestContent, type AiSuggestions } from "../../lib/ai";
 import { getAccessToken } from "../../lib/auth";
 import { describeApiError } from "../../lib/errors";
+import { generateFallbackQuizFromContent, type QuizQuestion } from "../reading/ComprehensionQuiz";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Badge from "../ui/Badge";
@@ -14,9 +15,10 @@ import {
   Lightbulb,
   Wand2,
   ListTree,
+  BrainCircuit,
   Check,
-  X,
-  Copy,
+  Quote,
+  PlusCircle,
 } from "lucide-react";
 
 interface AIAssistantPanelProps {
@@ -37,7 +39,7 @@ export default function AIAssistantPanel({
   className = "",
 }: AIAssistantPanelProps) {
   const { success, error: toastError } = useToast();
-  const [activeTab, setActiveTab] = useState<"suggest" | "improve" | "outline">("suggest");
+  const [activeTab, setActiveTab] = useState<"suggest" | "improve" | "outline" | "quiz">("suggest");
 
   // Suggest State
   const [suggestions, setSuggestions] = useState<AiSuggestions | null>(null);
@@ -53,6 +55,10 @@ export default function AIAssistantPanel({
   const [topic, setTopic] = useState("");
   const [generatedOutline, setGeneratedOutline] = useState<string | null>(null);
   const [isOutlining, setIsOutlining] = useState(false);
+
+  // Quiz Generator State
+  const [generatedQuestions, setGeneratedQuestions] = useState<QuizQuestion[] | null>(null);
+  const [isGeneratingQuiz, setIsGeneratingQuiz] = useState(false);
 
   async function handleGetSuggestions() {
     if (!content.trim() || content.trim().length < 20) {
@@ -90,14 +96,12 @@ export default function AIAssistantPanel({
 
     setIsImproving(true);
     try {
-      // Simulate/call improve flow (or fallback to intelligent client transformation if server endpoint differs)
       const token = getAccessToken();
       if (!token) {
         toastError("Please sign in first.");
         return;
       }
 
-      // If backend has suggestContent, we can also synthesize prompt
       const result = await suggestContent(
         `Please rewrite the following content with a ${tone.toLowerCase()} tone:\n\n${content}`,
         token
@@ -144,6 +148,39 @@ export default function AIAssistantPanel({
     }
   }
 
+  function handleGenerateQuiz() {
+    if (!content.trim() || content.trim().length < 40) {
+      toastError("Please write at least 40 characters of draft content before generating a quiz.");
+      return;
+    }
+
+    setIsGeneratingQuiz(true);
+    try {
+      const questions = generateFallbackQuizFromContent(content, "Article Check");
+      setGeneratedQuestions(questions);
+      success("Comprehension quiz generated from article text!");
+    } finally {
+      setIsGeneratingQuiz(false);
+    }
+  }
+
+  function handleInsertQuizIntoContent() {
+    if (!generatedQuestions || generatedQuestions.length === 0) return;
+
+    let quizMarkdown = `\n\n## Check Your Understanding\n\n`;
+    generatedQuestions.forEach((q, idx) => {
+      quizMarkdown += `### Question ${idx + 1}: ${q.question}\n`;
+      q.options.forEach((opt, optIdx) => {
+        const isCorrect = optIdx === q.correctIndex;
+        quizMarkdown += `- [${isCorrect ? "x" : " "}] ${opt}\n`;
+      });
+      quizMarkdown += `\n*Explanation: ${q.explanation}*\n\n`;
+    });
+
+    onAppendContent(quizMarkdown.trim());
+    success("Comprehension questions appended to article!");
+  }
+
   return (
     <div
       className={`overflow-hidden rounded-xl border border-blue-200 bg-linear-to-b from-blue-50/70 to-white shadow-xs dark:border-blue-900/60 dark:from-blue-950/20 dark:to-slate-900/60 ${className}`}
@@ -162,7 +199,7 @@ export default function AIAssistantPanel({
           <button
             type="button"
             onClick={() => setActiveTab("suggest")}
-            className={`flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition-colors ${
+            className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors ${
               activeTab === "suggest"
                 ? "bg-white text-blue-700 shadow-xs dark:bg-blue-900 dark:text-white"
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-300"
@@ -174,19 +211,19 @@ export default function AIAssistantPanel({
           <button
             type="button"
             onClick={() => setActiveTab("improve")}
-            className={`flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition-colors ${
+            className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors ${
               activeTab === "improve"
                 ? "bg-white text-blue-700 shadow-xs dark:bg-blue-900 dark:text-white"
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-300"
             }`}
           >
             <Wand2 className="h-3 w-3" />
-            <span>Improve</span>
+            <span>Tone</span>
           </button>
           <button
             type="button"
             onClick={() => setActiveTab("outline")}
-            className={`flex items-center gap-1 rounded-md px-2.5 py-1 font-medium transition-colors ${
+            className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors ${
               activeTab === "outline"
                 ? "bg-white text-blue-700 shadow-xs dark:bg-blue-900 dark:text-white"
                 : "text-slate-600 hover:text-slate-900 dark:text-slate-300"
@@ -194,6 +231,18 @@ export default function AIAssistantPanel({
           >
             <ListTree className="h-3 w-3" />
             <span>Outline</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("quiz")}
+            className={`flex items-center gap-1 rounded-md px-2 py-1 font-medium transition-colors ${
+              activeTab === "quiz"
+                ? "bg-white text-blue-700 shadow-xs dark:bg-blue-900 dark:text-white"
+                : "text-slate-600 hover:text-slate-900 dark:text-slate-300"
+            }`}
+          >
+            <BrainCircuit className="h-3 w-3" />
+            <span>Quiz</span>
           </button>
         </div>
       </div>
@@ -407,6 +456,76 @@ export default function AIAssistantPanel({
                 <pre className="font-mono text-xs text-slate-800 dark:text-slate-200 whitespace-pre-wrap bg-slate-50 dark:bg-slate-950 p-2 rounded">
                   {generatedOutline}
                 </pre>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* QUIZ TAB (Comprehension Generator) */}
+        {activeTab === "quiz" && (
+          <div className="space-y-4">
+            <p className="text-xs text-slate-600 dark:text-slate-400">
+              Auto-generate grounded comprehension questions from your draft text so readers can verify what they learned.
+            </p>
+
+            <Button
+              type="button"
+              variant="primary"
+              size="sm"
+              loading={isGeneratingQuiz}
+              disabled={isGeneratingQuiz || content.trim().length < 40}
+              onClick={handleGenerateQuiz}
+              className="w-full"
+            >
+              <BrainCircuit className="h-3.5 w-3.5" />
+              <span>Generate Comprehension Quiz</span>
+            </Button>
+
+            {generatedQuestions && (
+              <div className="space-y-3 pt-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-semibold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    {generatedQuestions.length} Questions Generated
+                  </span>
+                  <Button
+                    type="button"
+                    variant="primary"
+                    size="sm"
+                    onClick={handleInsertQuizIntoContent}
+                    className="h-6 text-xs px-2 gap-1"
+                  >
+                    <PlusCircle className="h-3 w-3" />
+                    <span>Append to Story</span>
+                  </Button>
+                </div>
+
+                {generatedQuestions.map((q, idx) => (
+                  <div
+                    key={q.id}
+                    className="rounded-lg border border-blue-200/80 bg-white p-3 text-xs dark:border-blue-900/60 dark:bg-slate-900"
+                  >
+                    <p className="font-bold text-slate-900 dark:text-white mb-1.5">
+                      Q{idx + 1}: {q.question}
+                    </p>
+                    <ul className="space-y-1 mb-2">
+                      {q.options.map((opt, optIdx) => (
+                        <li
+                          key={optIdx}
+                          className={`rounded px-2 py-0.5 text-[11px] ${
+                            optIdx === q.correctIndex
+                              ? "bg-emerald-50 text-emerald-800 font-semibold dark:bg-emerald-950/60 dark:text-emerald-300"
+                              : "text-slate-600 dark:text-slate-400"
+                          }`}
+                        >
+                          {optIdx === q.correctIndex ? "✓ " : "• "} {opt}
+                        </li>
+                      ))}
+                    </ul>
+                    <div className="text-[10px] text-slate-500 dark:text-slate-400 italic">
+                      Citation: &quot;{q.verbatimCitation}&quot;
+                    </div>
+                  </div>
+                ))}
               </div>
             )}
           </div>

@@ -148,16 +148,23 @@ function NewPostContent() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Editor Form - 2 Cols on Large screens */}
         <form className="space-y-6 lg:col-span-2">
-          <Input
-            id="title"
-            label="Title"
-            type="text"
-            value={formData.title}
-            onChange={(e) => handleChange("title", e.target.value)}
-            error={errors.title}
-            placeholder="Enter an intriguing title..."
-            required
-          />
+          <div>
+            <Input
+              id="title"
+              label="Title"
+              type="text"
+              value={formData.title}
+              onChange={(e) => handleChange("title", e.target.value)}
+              error={errors.title}
+              placeholder="Enter an intriguing title..."
+              required
+            />
+            {formData.title.trim() && (
+              <p className="mt-1 text-[11px] font-mono text-slate-400">
+                Permalink preview: <span className="text-blue-600 dark:text-blue-400">/read/{formData.title.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-")}</span>
+              </p>
+            )}
+          </div>
 
           <MarkdownEditor
             id="content"
