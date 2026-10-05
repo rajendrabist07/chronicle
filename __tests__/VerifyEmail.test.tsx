@@ -9,6 +9,16 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
+vi.mock("../app/context/AuthContext", () => ({
+  useAuth: () => ({
+    user: null,
+    isLoading: false,
+    setUser: vi.fn(),
+    refreshUser: vi.fn().mockResolvedValue(undefined),
+    logout: vi.fn(),
+  }),
+}));
+
 vi.mock("../app/lib/auth", () => ({
   verifyEmail: vi.fn(),
   resendVerificationEmail: vi.fn(),

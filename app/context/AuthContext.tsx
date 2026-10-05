@@ -15,6 +15,7 @@ interface AuthContextValue {
   user: User | null;
   isLoading: boolean;
   setUser: (user: User | null) => void;
+  refreshUser: () => Promise<void>;
   logout: () => void;
 }
 
@@ -24,6 +25,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  async function refreshUser() {
+    const token = getAccessToken();
+    if (!token) {
+      setUser(null);
+      return;
+    }
+    try {
+      const res = await apiFetch<{ success: true; data: User }>("/auth/me", { token });
+      setUser(res.data);
+    } catch {
+      clearTokens();
+      setUser(null);
+    }
+  }
+
   useEffect(() => {
     const token = getAccessToken();
     if (!token) {
@@ -31,10 +47,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    apiFetch<{ success: true; data: User }>("/auth/me", { token })
-      .then((res) => setUser(res.data))
-      .catch(() => clearTokens())
-      .finally(() => setIsLoading(false));
+    refreshUser().finally(() => setIsLoading(false));
   }, []);
 
   function logout() {
@@ -43,7 +56,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   return (
-    <AuthContext.Provider value={{ user, isLoading, setUser, logout }}>
+    <AuthContext.Provider value={{ user, isLoading, setUser, refreshUser, logout }}>
       {children}
     </AuthContext.Provider>
   );

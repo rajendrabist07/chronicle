@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useAuth } from "../../context/AuthContext";
 import { resendVerificationEmail } from "../../lib/auth";
+import Link from "next/link";
 import { AlertTriangle, X, RefreshCw } from "lucide-react";
 
 export default function UnverifiedEmailBanner() {
@@ -50,7 +51,10 @@ export default function UnverifiedEmailBanner() {
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" />
           <span>
-            Please verify your email address (<strong>{user.email}</strong>) to publish articles and participate in discussions.
+            Please verify your email address (<strong>{user.email}</strong>) to publish articles and participate in discussions.{" "}
+            <Link href="/verify-email" className="font-semibold underline underline-offset-2 hover:text-amber-950 dark:hover:text-white">
+              Enter verification code
+            </Link>
           </span>
           {statusMessage && (
             <span className="font-semibold text-amber-700 dark:text-amber-300">
