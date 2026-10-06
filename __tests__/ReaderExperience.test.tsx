@@ -1,7 +1,7 @@
 import { render, screen, fireEvent } from "@testing-library/react";
 import { describe, it, expect, vi } from "vitest";
 import TableOfContents, { extractHeadings } from "../app/components/reading/TableOfContents";
-import ComprehensionQuiz, { generateFallbackQuizFromContent } from "../app/components/reading/ComprehensionQuiz";
+import ComprehensionQuiz from "../app/components/reading/ComprehensionQuiz";
 import AskThisArticle, { findGroundedQuotes } from "../app/components/reading/AskThisArticle";
 import ReadingPreferences from "../app/components/reading/ReadingPreferences";
 

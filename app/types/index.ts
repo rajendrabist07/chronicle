@@ -5,6 +5,11 @@ export interface User {
     role: 'OWNER' | 'ADMIN' | 'MEMBER';
     emailVerified?: boolean;
     bio?: string | null;
+    username?: string | null;
+    badges?: string[];
+    trustLevel?: 'contributor' | 'verified' | 'authority';
+    avatarUrl?: string | null;
+    createdAt?: string;
 }
 
 export interface AuthResponse {
@@ -24,6 +29,10 @@ export interface Post {
     publishedAt: string | null;
     authorId: string;
     authorName: string;
+    authorUsername?: string | null;
+    authorBio?: string | null;
+    authorBadges?: string[];
+    hasQuiz?: boolean;
     createdAt: string;
     tags?: { id: string; name: string }[];
     rejectionReason?: string | null;

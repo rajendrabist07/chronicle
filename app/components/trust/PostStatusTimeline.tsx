@@ -2,6 +2,7 @@
 
 import React from "react";
 import { CheckCircle2, Clock, AlertCircle, FileText, Send } from "lucide-react";
+import { formatDisplayDate } from "../../lib/time";
 
 export type PostReviewStatus = "DRAFT" | "PENDING_REVIEW" | "PUBLISHED" | "REJECTED";
 
@@ -119,7 +120,7 @@ export default function PostStatusTimeline({
                   </h4>
                   {step.timestamp && (
                     <span className="text-[11px] text-slate-400 dark:text-slate-500">
-                      {new Date(step.timestamp).toLocaleDateString()}
+                      {formatDisplayDate(step.timestamp)}
                     </span>
                   )}
                 </div>

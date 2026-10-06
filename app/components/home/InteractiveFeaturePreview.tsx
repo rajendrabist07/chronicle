@@ -28,7 +28,7 @@ export default function InteractiveFeaturePreview() {
 
   const sampleArticle = {
     title: "Understanding PostgreSQL MVCC & Tuple Versioning",
-    author: "Elena Rostova",
+    author: "Elena Rostova (Sample Profile)",
     trustLevel: "authority" as const,
     publishedAt: "2026-03-28",
     excerpt:
@@ -40,12 +40,12 @@ export default function InteractiveFeaturePreview() {
     {
       query: "How does Postgres handle updates under MVCC?",
       answer: "PostgreSQL does not mutate database rows in-place during UPDATE operations. Instead, it writes a completely new physical tuple to the data page.",
-      confidence: "Verbatim Match (100% Grounded)",
+      confidence: "Verbatim Passage Citation",
     },
     {
       query: "What role does VACUUM play?",
       answer: "The vacuum process eventually reclaims dead tuples to prevent table bloat.",
-      confidence: "Verbatim Match (100% Grounded)",
+      confidence: "Verbatim Passage Citation",
     },
   ];
 
@@ -69,6 +69,17 @@ export default function InteractiveFeaturePreview() {
 
   return (
     <div className="w-full">
+      {/* Sample Walkthrough Disclosure */}
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-blue-200/80 bg-blue-50/70 px-4 py-2.5 text-xs text-blue-900 dark:border-blue-900/60 dark:bg-blue-950/40 dark:text-blue-200">
+        <div className="flex items-center gap-2">
+          <Sparkles className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+          <span className="font-semibold">Interactive Architecture Preview</span>
+          <span className="hidden sm:inline text-blue-700/80 dark:text-blue-300/80">— Simulated technical walkthrough demonstrating active learning and verification standards.</span>
+        </div>
+        <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-semibold tracking-wide uppercase text-blue-700 dark:bg-blue-900 dark:text-blue-300">
+          Sample Walkthrough
+        </span>
+      </div>
       {/* Tab Controls */}
       <div className="flex justify-center mb-6">
         <div className="inline-flex rounded-xl bg-slate-100 p-1.5 shadow-inner dark:bg-slate-800/80">

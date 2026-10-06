@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublicPosts, calculateReadingTime } from "../../lib/public";
+import { formatDisplayDate } from "../../lib/time";
 import { SITE_CONFIG } from "../../lib/site";
 import Card from "../../components/ui/Card";
 import Badge from "../../components/ui/Badge";
@@ -134,13 +135,13 @@ export default async function TagPage({ params }: TagPageProps) {
               <div>
                 <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                   <Link
-                    href={`/u/${post.authorId}`}
-                    className="flex items-center gap-2 hover:underline"
+                    href={`/u/${post.authorUsername || post.authorId}`}
+                    className="flex items-center gap-2 hover:underline min-w-0"
                   >
                     <Avatar name={post.authorName || "Author"} size="xs" />
-                    <span>{post.authorName || "Anonymous"}</span>
+                    <span className="truncate max-w-[140px]">{post.authorName || "Anonymous"}</span>
                   </Link>
-                  <span>{calculateReadingTime(post.content)}</span>
+                  <span className="shrink-0">{calculateReadingTime(post.content)}</span>
                 </div>
 
                 <Link
@@ -169,7 +170,7 @@ export default async function TagPage({ params }: TagPageProps) {
                     dateTime={post.publishedAt || post.createdAt}
                     className="shrink-0 text-[11px] text-slate-400"
                   >
-                    {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
+                    {formatDisplayDate(post.publishedAt || post.createdAt)}
                   </time>
                 </div>
               </div>

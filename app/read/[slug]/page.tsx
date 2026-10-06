@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import {
   getPublicPostBySlug,
   getPublicPostComments,
+  getPublicPostQuiz,
   calculateReadingTime,
 } from "../../lib/public";
 import { SITE_CONFIG } from "../../lib/site";
@@ -65,13 +66,16 @@ export async function generateMetadata({ params }: ReadPageProps): Promise<Metad
 
 export default async function ReadPostPage({ params }: ReadPageProps) {
   const { slug } = await params;
-  const post = await getPublicPostBySlug(slug);
+  const [post, comments, quiz] = await Promise.all([
+    getPublicPostBySlug(slug),
+    getPublicPostComments(slug),
+    getPublicPostQuiz(slug),
+  ]);
 
   if (!post) {
     notFound();
   }
 
-  const comments = await getPublicPostComments(slug);
   const readingTime = calculateReadingTime(post.content);
   const postUrl = `${SITE_CONFIG.url}/read/${post.slug || post.id}`;
 
@@ -86,7 +90,7 @@ export default async function ReadPostPage({ params }: ReadPageProps) {
     author: {
       "@type": "Person",
       name: post.authorName || "Chronicle Author",
-      url: `${SITE_CONFIG.url}/u/${post.authorId}`,
+      url: `${SITE_CONFIG.url}/u/${post.authorUsername || post.authorId}`,
     },
     publisher: {
       "@type": "Organization",
@@ -136,6 +140,7 @@ export default async function ReadPostPage({ params }: ReadPageProps) {
       <ArticleReaderView
         post={post}
         comments={comments}
+        quiz={quiz}
         readingTime={readingTime}
         postUrl={postUrl}
       />

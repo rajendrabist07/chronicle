@@ -35,3 +35,31 @@ export function formatRelativeTime(dateString: string | Date): string {
   const diffInYears = Math.round(diffInDays / 365);
   return rtf.format(diffInYears, "year");
 }
+
+/**
+ * Formats a date into a deterministic "MMM D, YYYY" string (e.g. "Oct 6, 2026").
+ * Uses UTC to eliminate SSR-to-client locale hydration mismatch.
+ */
+export function formatDisplayDate(dateInput: string | Date | null | undefined): string {
+  if (!dateInput) return "";
+  const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  if (isNaN(d.getTime())) return "";
+
+  const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  return `${months[d.getUTCMonth()]} ${d.getUTCDate()}, ${d.getUTCFullYear()}`;
+}
+
+/**
+ * Formats a date into deterministic "Month YYYY" (e.g. "October 2026").
+ */
+export function formatMonthYear(dateInput: string | Date | null | undefined): string {
+  if (!dateInput) return "";
+  const d = typeof dateInput === "string" ? new Date(dateInput) : dateInput;
+  if (isNaN(d.getTime())) return "";
+
+  const fullMonths = [
+    "January", "February", "March", "April", "May", "June",
+    "July", "August", "September", "October", "November", "December"
+  ];
+  return `${fullMonths[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}

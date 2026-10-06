@@ -31,71 +31,18 @@ interface ComprehensionQuizProps {
   className?: string;
 }
 
-export function generateFallbackQuizFromContent(content: string, title: string): QuizQuestion[] {
-  // Extract sentences from content to create grounded comprehension checks
-  const cleanContent = content.replace(/[#*`_~]/g, "").trim();
-  const sentences = cleanContent
-    .split(/(?<=[.?!])\s+/)
-    .filter((s) => s.length > 40 && !s.startsWith("http"));
-
-  if (sentences.length >= 2) {
-    const s1 = sentences[0];
-    const s2 = sentences[Math.min(2, sentences.length - 1)];
-
-    return [
-      {
-        id: "q1",
-        question: `According to "${title.slice(0, 45)}...", what is a primary concept covered in the introduction?`,
-        options: [
-          s1,
-          "The system runs entirely synchronously without persisting state to disk.",
-          "All network requests bypass modern authentication and access control layers.",
-        ],
-        correctIndex: 0,
-        explanation: "This directly reflects the opening thesis stated in the article.",
-        verbatimCitation: s1,
-      },
-      {
-        id: "q2",
-        question: "Which of the following statements is directly supported by the article's text?",
-        options: [
-          "Legacy monolithic systems always outperform distributed architecture in high-throughput benchmarks.",
-          s2,
-          "Security measures are strictly optional in production-scale deployments.",
-        ],
-        correctIndex: 1,
-        explanation: "This statement is verbatim grounded in the article's body.",
-        verbatimCitation: s2,
-      },
-    ];
-  }
-
-  return [
-    {
-      id: "q-default",
-      question: `What is the core takeaway of "${title}"?`,
-      options: [
-        "Applying verified engineering practices and understanding core architecture principles.",
-        "Relying solely on quick AI-generated snippets without verifying edge cases.",
-        "Ignoring tests and CI/CD pipelines in production.",
-      ],
-      correctIndex: 0,
-      explanation: "Chronicle emphasizes grounded comprehension and engineering rigor.",
-      verbatimCitation: title,
-    },
-  ];
-}
-
 export default function ComprehensionQuiz({
   articleTitle,
   questions,
-  articleContent = "",
   className = "",
 }: ComprehensionQuizProps) {
-  const quizQuestions =
-    questions && questions.length > 0
-      ? questions
-      : generateFallbackQuizFromContent(articleContent, articleTitle);
+  // Milestone F4-1: Honesty Gate. Never fabricate quiz questions.
+  // If no questions exist from the verified backend, render nothing.
+  if (!questions || questions.length === 0) {
+    return null;
+  }
+
+  const quizQuestions = questions;
 
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [selectedAnswers, setSelectedAnswers] = useState<Record<number, number>>({});
@@ -167,6 +114,8 @@ export default function ComprehensionQuiz({
         <Badge variant="primary" className="text-[11px]">
           {quizFinished
             ? "Complete"
+            : totalQuestions === 1
+            ? "Quick Check"
             : `Question ${currentQuestionIndex + 1} of ${totalQuestions}`}
         </Badge>
       </div>
@@ -275,14 +224,18 @@ export default function ComprehensionQuiz({
 
           {/* Navigation Controls */}
           <div className="mt-5 flex items-center justify-between pt-3 border-t border-slate-200/80 dark:border-slate-800">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={handlePrevious}
-              disabled={currentQuestionIndex === 0}
-            >
-              Previous
-            </Button>
+            {totalQuestions > 1 ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handlePrevious}
+                disabled={currentQuestionIndex === 0}
+              >
+                Previous
+              </Button>
+            ) : (
+              <div />
+            )}
 
             <Button
               size="sm"

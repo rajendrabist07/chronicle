@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getPublicUser, getPublicPosts, calculateReadingTime } from "../../lib/public";
+import { formatDisplayDate, formatMonthYear } from "../../lib/time";
 import { SITE_CONFIG } from "../../lib/site";
 import Avatar from "../../components/ui/Avatar";
 import Card from "../../components/ui/Card";
@@ -30,7 +31,7 @@ export async function generateMetadata({ params }: UserProfilePageProps): Promis
   const userUrl = `/u/${encodeURIComponent(id)}`;
 
   return {
-    title: `${user.name} — Author Profile`,
+    title: user.name,
     description: user.bio || `Explore published articles and stories by ${user.name} on ${SITE_CONFIG.name}.`,
     alternates: {
       canonical: userUrl,
@@ -106,28 +107,27 @@ export default async function UserProfilePage({ params }: UserProfilePageProps) 
               <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white sm:text-3xl">
                 {user.name}
               </h1>
-              <TrustLevelBadge level="verified" size="md" />
+              {user.badges?.includes("AUTHORITY") ? (
+                <TrustLevelBadge level="authority" size="md" />
+              ) : user.badges?.includes("VERIFIED") ? (
+                <TrustLevelBadge level="verified" size="md" />
+              ) : null}
             </div>
-            {user.bio ? (
+            {user.username && (
+              <p className="text-xs font-mono text-slate-500 dark:text-slate-400 mt-1">
+                @{user.username}
+              </p>
+            )}
+            {user.bio && (
               <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
                 {user.bio}
-              </p>
-            ) : (
-              <p className="mt-2 text-xs italic text-slate-400">
-                Technical Writer at Chronicle
               </p>
             )}
 
             <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-slate-500 sm:justify-start dark:text-slate-400">
               <span className="flex items-center gap-1">
                 <Calendar className="h-3.5 w-3.5" />
-                <span>
-                  Joined{" "}
-                  {new Date(user.createdAt).toLocaleDateString(undefined, {
-                    month: "long",
-                    year: "numeric",
-                  })}
-                </span>
+                <span>Joined {formatMonthYear(user.createdAt)}</span>
               </span>
               <span className="flex items-center gap-1">
                 <FileText className="h-3.5 w-3.5" />
@@ -187,7 +187,7 @@ export default async function UserProfilePage({ params }: UserProfilePageProps) 
                     dateTime={post.publishedAt || post.createdAt}
                     className="shrink-0 text-[11px] text-slate-400"
                   >
-                    {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
+                    {formatDisplayDate(post.publishedAt || post.createdAt)}
                   </time>
                 </div>
               </Card>

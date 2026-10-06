@@ -318,7 +318,11 @@ function SettingsContent() {
           </div>
           <div className="mt-2 flex flex-wrap items-center gap-2">
             <Badge variant="primary">{user?.role || "MEMBER"}</Badge>
-            <TrustLevelBadge level="verified" size="sm" />
+            {user?.badges?.includes("AUTHORITY") || user?.trustLevel === "authority" ? (
+              <TrustLevelBadge level="authority" size="sm" />
+            ) : user?.badges?.includes("VERIFIED") || user?.trustLevel === "verified" ? (
+              <TrustLevelBadge level="verified" size="sm" />
+            ) : null}
           </div>
           <div className="mt-4 flex items-center justify-between border-t border-slate-100 pt-3 dark:border-slate-800/60">
             <span className="text-xs text-slate-500">User ID</span>

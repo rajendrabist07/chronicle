@@ -23,7 +23,7 @@ import {
 import { getAccessToken } from "../../lib/auth";
 import { describeApiError } from "../../lib/errors";
 import type { Post } from "../../types";
-import { formatRelativeTime } from "../../lib/time";
+import { formatRelativeTime, formatDisplayDate } from "../../lib/time";
 import { calculateReadingTime } from "../../lib/public";
 import MarkdownEditor from "../../components/editor/MarkdownEditor";
 import AIAssistantPanel from "../../components/ai/AIAssistantPanel";
@@ -431,7 +431,7 @@ export default function PostDetailPage() {
               <span>•</span>
               <span className="flex items-center gap-1">
                 <Calendar className="h-3.5 w-3.5" />
-                {new Date(post.createdAt).toLocaleDateString()}
+                {formatDisplayDate(post.createdAt)}
               </span>
               <span>•</span>
               <span className="flex items-center gap-1">

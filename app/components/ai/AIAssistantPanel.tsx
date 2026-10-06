@@ -4,7 +4,7 @@ import { useState } from "react";
 import { suggestContent, type AiSuggestions } from "../../lib/ai";
 import { getAccessToken } from "../../lib/auth";
 import { describeApiError } from "../../lib/errors";
-import { generateFallbackQuizFromContent, type QuizQuestion } from "../reading/ComprehensionQuiz";
+import { type QuizQuestion } from "../reading/ComprehensionQuiz";
 import Button from "../ui/Button";
 import Input from "../ui/Input";
 import Badge from "../ui/Badge";
@@ -148,17 +148,43 @@ export default function AIAssistantPanel({
     }
   }
 
+function extractDraftQuizQuestions(text: string): QuizQuestion[] {
+  const clean = text.replace(/[#*`_~]/g, "").trim();
+  const sentences = clean
+    .split(/(?<=[.?!])\s+/)
+    .filter((s) => s.length > 50 && !s.startsWith("http"));
+
+  if (sentences.length === 0) return [];
+
+  return sentences.slice(0, 2).map((sentence, idx) => ({
+    id: `draft-q-${idx + 1}`,
+    question: `Key Concept check (${sentence.slice(0, 35)}...): What is stated in this section?`,
+    options: [
+      sentence,
+      "This concept is explicitly refuted by modern architectural benchmarks.",
+      "This approach is non-standard and avoided in production systems.",
+    ],
+    correctIndex: 0,
+    explanation: "Derived from draft passage for author review.",
+    verbatimCitation: sentence,
+  }));
+}
+
   function handleGenerateQuiz() {
     if (!content.trim() || content.trim().length < 40) {
-      toastError("Please write at least 40 characters of draft content before generating a quiz.");
+      toastError("Please write at least 40 characters of draft content before generating comprehension questions.");
       return;
     }
 
     setIsGeneratingQuiz(true);
     try {
-      const questions = generateFallbackQuizFromContent(content, "Article Check");
+      const questions = extractDraftQuizQuestions(content);
+      if (questions.length === 0) {
+        toastError("Not enough complete sentences in draft to generate questions. Add more narrative text.");
+        return;
+      }
       setGeneratedQuestions(questions);
-      success("Comprehension quiz generated from article text!");
+      success("Draft comprehension checks prepared!");
     } finally {
       setIsGeneratingQuiz(false);
     }

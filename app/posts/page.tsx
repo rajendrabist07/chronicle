@@ -6,6 +6,7 @@ import { useAuth } from "../context/AuthContext";
 import { fetchPosts } from "../lib/posts";
 import { getAccessToken } from "../lib/auth";
 import type { Post } from "../types";
+import { formatDisplayDate } from "../lib/time";
 import Button from "../components/ui/Button";
 import Spinner from "../components/ui/Spinner";
 import Link from "next/link";
@@ -125,7 +126,7 @@ export default function PostsPage() {
                 </Link>
                 <p className="mt-1 text-sm text-gray-500">
                   {post.status} ·{" "}
-                  {new Date(post.createdAt).toLocaleDateString()}
+                  {formatDisplayDate(post.createdAt)}
                   {post.authorName && ` · by ${post.authorName}`}
                 </p>
                 <p className="mt-2 text-gray-700 line-clamp-2">

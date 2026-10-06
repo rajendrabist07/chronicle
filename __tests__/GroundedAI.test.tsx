@@ -1,9 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ComprehensionQuiz, {
-  generateFallbackQuizFromContent,
-} from "../app/components/reading/ComprehensionQuiz";
+import ComprehensionQuiz from "../app/components/reading/ComprehensionQuiz";
 import AskThisArticle, {
   findGroundedQuotes,
 } from "../app/components/reading/AskThisArticle";
@@ -15,13 +13,14 @@ When a row is updated, PostgreSQL writes a new row version (tuple) instead of ov
 Old row versions are later cleaned up by the autovacuum background daemon.
 `;
 
-  it("generates grounded quiz questions directly from article content sentences", () => {
-    const generated = generateFallbackQuizFromContent(
-      sampleArticleContent,
-      "PostgreSQL MVCC Internals"
+  it("honesty gate: renders null when no verified questions are provided", () => {
+    const { container } = render(
+      <ComprehensionQuiz
+        articleTitle="PostgreSQL MVCC Internals"
+        questions={[]}
+      />
     );
-    expect(generated.length).toBeGreaterThanOrEqual(1);
-    expect(generated[0].verbatimCitation).toBeDefined();
+    expect(container.firstChild).toBeNull();
   });
 
   it("interactive quiz allows selecting answer, displaying explanation and verbatim quote", async () => {

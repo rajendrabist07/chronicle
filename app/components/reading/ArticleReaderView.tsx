@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -18,11 +18,70 @@ import ArticleActionBar from "../engagement/ArticleActionBar";
 import PublicPostComments from "../comments/PublicPostComments";
 import type { Post } from "../../types";
 import type { Comment } from "../../lib/comments";
-import { Calendar, Clock, ArrowLeft, ShieldCheck } from "lucide-react";
+import type { PostQuiz } from "../../lib/public";
+import { formatDisplayDate } from "../../lib/time";
+import { Calendar, Clock, ArrowLeft, ShieldCheck, Check, Copy } from "lucide-react";
+
+function CodeBlock({ children, ...props }: React.HTMLAttributes<HTMLPreElement>) {
+  const [copied, setCopied] = useState(false);
+  const preRef = useRef<HTMLPreElement>(null);
+
+  const handleCopy = () => {
+    if (!preRef.current) return;
+    const text = preRef.current.innerText || "";
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
+  };
+
+  return (
+    <div className="relative group my-4">
+      <button
+        type="button"
+        onClick={handleCopy}
+        aria-label="Copy code to clipboard"
+        className="absolute right-2.5 top-2.5 z-10 flex items-center gap-1.5 rounded-md border border-slate-700 bg-slate-800/90 px-2 py-1 text-[11px] font-medium text-slate-300 opacity-0 transition-opacity group-hover:opacity-100 hover:bg-slate-700 hover:text-white focus:opacity-100"
+      >
+        {copied ? (
+          <>
+            <Check className="h-3 w-3 text-emerald-400" />
+            <span className="text-emerald-400 font-mono">Copied!</span>
+          </>
+        ) : (
+          <>
+            <Copy className="h-3 w-3" />
+            <span>Copy</span>
+          </>
+        )}
+      </button>
+      <pre ref={preRef} {...props}>
+        {children}
+      </pre>
+    </div>
+  );
+}
+
+function headingToId(node: React.ReactNode): string {
+  let text = "";
+  if (typeof node === "string" || typeof node === "number") {
+    text = String(node);
+  } else if (Array.isArray(node)) {
+    text = node.map(headingToId).join("");
+  } else if (node && typeof node === "object" && "props" in (node as any)) {
+    text = headingToId((node as any).props.children);
+  }
+  return text
+    .toLowerCase()
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
 
 interface ArticleReaderViewProps {
   post: Post;
   comments: Comment[];
+  quiz?: PostQuiz | null;
   readingTime: string;
   postUrl: string;
 }
@@ -30,6 +89,7 @@ interface ArticleReaderViewProps {
 export default function ArticleReaderView({
   post,
   comments,
+  quiz,
   readingTime,
   postUrl,
 }: ArticleReaderViewProps) {
@@ -75,11 +135,21 @@ export default function ArticleReaderView({
             <article>
               {/* Article Header */}
               <header className="mb-8 space-y-4">
-                {/* Trust & Review Badges */}
-                <div className="flex flex-wrap items-center gap-2">
-                  <TrustLevelBadge level="verified" size="sm" />
-                  <ReviewStatusBadge badge="comprehension_ready" size="sm" />
-                </div>
+                {/* Trust & Review Badges - Truth Gate: render only if verified by data */}
+                {(post.authorBadges?.includes("VERIFIED") ||
+                  post.authorBadges?.includes("AUTHORITY") ||
+                  (quiz?.questions && quiz.questions.length > 0)) && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {post.authorBadges?.includes("AUTHORITY") ? (
+                      <TrustLevelBadge level="authority" size="sm" />
+                    ) : post.authorBadges?.includes("VERIFIED") ? (
+                      <TrustLevelBadge level="verified" size="sm" />
+                    ) : null}
+                    {quiz?.questions && quiz.questions.length > 0 && (
+                      <ReviewStatusBadge badge="comprehension_ready" size="sm" />
+                    )}
+                  </div>
+                )}
 
                 <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-5xl dark:text-white leading-tight">
                   {post.title}
@@ -88,7 +158,7 @@ export default function ArticleReaderView({
                 <div className="flex flex-wrap items-center justify-between gap-4 border-y border-slate-200 py-4 dark:border-slate-800">
                   {/* Author */}
                   <Link
-                    href={`/u/${post.authorId}`}
+                    href={`/u/${post.authorUsername || post.authorId}`}
                     className="flex items-center gap-3 group"
                   >
                     <Avatar name={post.authorName || "Author"} size="md" />
@@ -98,9 +168,11 @@ export default function ArticleReaderView({
                           {post.authorName || "Anonymous Writer"}
                         </p>
                       </div>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">
-                        Technical Writer
-                      </p>
+                      {post.authorUsername && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          @{post.authorUsername}
+                        </p>
+                      )}
                     </div>
                   </Link>
 
@@ -109,11 +181,7 @@ export default function ArticleReaderView({
                     <span className="flex items-center gap-1">
                       <Calendar className="h-3.5 w-3.5" />
                       <time dateTime={post.publishedAt || post.createdAt}>
-                        {new Date(post.publishedAt || post.createdAt).toLocaleDateString(undefined, {
-                          year: "numeric",
-                          month: "short",
-                          day: "numeric",
-                        })}
+                        {formatDisplayDate(post.publishedAt || post.createdAt)}
                       </time>
                     </span>
                     <span className="flex items-center gap-1">
@@ -159,14 +227,13 @@ export default function ArticleReaderView({
                   remarkPlugins={[remarkGfm]}
                   rehypePlugins={[rehypeSanitize]}
                   components={{
+                    pre: CodeBlock,
                     h2: ({ children, ...props }) => {
-                      const text = String(children);
-                      const id = text.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
+                      const id = headingToId(children);
                       return <h2 id={id} {...props}>{children}</h2>;
                     },
                     h3: ({ children, ...props }) => {
-                      const text = String(children);
-                      const id = text.toLowerCase().replace(/[^\w\s-]/g, "").replace(/\s+/g, "-");
+                      const id = headingToId(children);
                       return <h3 id={id} {...props}>{children}</h3>;
                     },
                   }}
@@ -184,15 +251,17 @@ export default function ArticleReaderView({
                 />
               </div>
 
-              {/* Comprehension Quiz Module (Active Learning) */}
-              <section className="my-10" aria-label="Comprehension Check">
-                <ComprehensionQuiz
-                  articleTitle={post.title}
-                  articleContent={post.content}
-                />
-              </section>
+              {/* Comprehension Quiz Module (Active Learning) - Truth Gate: only renders if verified questions exist */}
+              {quiz?.questions && quiz.questions.length > 0 && (
+                <section className="my-10" aria-label="Comprehension Check">
+                  <ComprehensionQuiz
+                    articleTitle={post.title}
+                    questions={quiz.questions}
+                  />
+                </section>
+              )}
 
-              {/* Author Trust & Bio Card */}
+              {/* Author Card - Truth Gate: only render badges if proven, no fabricated bio */}
               <Card className="my-10 p-6 border-slate-200 dark:border-slate-800">
                 <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4">
                   <Avatar name={post.authorName || "Author"} size="lg" />
@@ -201,13 +270,19 @@ export default function ArticleReaderView({
                       <h4 className="text-base font-bold text-slate-900 dark:text-white">
                         {post.authorName || "Chronicle Writer"}
                       </h4>
-                      <TrustLevelBadge level="verified" size="sm" />
+                      {post.authorBadges?.includes("AUTHORITY") ? (
+                        <TrustLevelBadge level="authority" size="sm" />
+                      ) : post.authorBadges?.includes("VERIFIED") ? (
+                        <TrustLevelBadge level="verified" size="sm" />
+                      ) : null}
                     </div>
-                    <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
-                      Published engineer sharing architectural insights and verified code patterns on Chronicle.
-                    </p>
+                    {post.authorBio && (
+                      <p className="text-xs text-slate-600 dark:text-slate-300 mb-3">
+                        {post.authorBio}
+                      </p>
+                    )}
                     <Link
-                      href={`/u/${post.authorId}`}
+                      href={`/u/${post.authorUsername || post.authorId}`}
                       className="text-xs font-semibold text-blue-600 hover:underline dark:text-blue-400"
                     >
                       View full author profile & stories →
@@ -226,7 +301,7 @@ export default function ArticleReaderView({
             <aside className="hidden lg:col-span-4 lg:block">
               <div className="sticky top-20 space-y-6">
                 {headings.length > 0 && <TableOfContents headings={headings} />}
-                <AskThisArticle content={post.content} />
+                <AskThisArticle content={post.content} slug={post.slug || post.id} />
               </div>
             </aside>
           )}

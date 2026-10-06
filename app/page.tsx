@@ -1,5 +1,6 @@
 import Link from "next/link";
-import { getPublicPosts, calculateReadingTime } from "./lib/public";
+import { getPublicPosts, getTrendingTags, getPublicTags, calculateReadingTime } from "./lib/public";
+import { formatDisplayDate } from "./lib/time";
 import type { Post } from "./types";
 import { SITE_CONFIG } from "./lib/site";
 import Button from "./components/ui/Button";
@@ -55,15 +56,21 @@ export default async function HomePage() {
     logo: `${SITE_CONFIG.url}/icon.svg`,
   };
 
-  const featuredTopics = [
-    { name: "TypeScript", tag: "typescript" },
-    { name: "Next.js", tag: "nextjs" },
-    { name: "System Design", tag: "system-design" },
-    { name: "PostgreSQL", tag: "postgres" },
-    { name: "Architecture", tag: "architecture" },
-    { name: "DevOps", tag: "devops" },
-    { name: "React", tag: "react" },
-  ];
+  let trendingTopics: { name: string; tag: string }[] = [];
+  try {
+    const rawTrending = await getTrendingTags(6);
+    if (rawTrending && rawTrending.length > 0) {
+      trendingTopics = rawTrending.map((t) => ({ name: t.name, tag: t.name }));
+    } else {
+      const publicTags = await getPublicTags();
+      trendingTopics = (publicTags || [])
+        .filter((t) => (t._count?.posts ?? 1) > 0)
+        .slice(0, 6)
+        .map((t) => ({ name: t.name, tag: t.name }));
+    }
+  } catch (err) {
+    console.error("Failed to load trending tags:", err);
+  }
 
   return (
     <div className="flex flex-col gap-20 pb-20">
@@ -104,19 +111,21 @@ export default async function HomePage() {
             </Link>
           </div>
 
-          {/* Quick Topic Chips */}
-          <div className="mt-10 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
-            <span className="font-semibold text-slate-700 dark:text-slate-300">Trending Topics:</span>
-            {featuredTopics.map((topic) => (
-              <Link
-                key={topic.tag}
-                href={`/tags/${encodeURIComponent(topic.tag)}`}
-                className="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-800 dark:hover:text-blue-400"
-              >
-                #{topic.name}
-              </Link>
-            ))}
-          </div>
+          {/* Dynamic Topic Chips - only displayed when real topics exist */}
+          {trendingTopics.length > 0 && (
+            <div className="mt-10 flex flex-wrap items-center justify-center gap-2 text-xs text-slate-500 dark:text-slate-400">
+              <span className="font-semibold text-slate-700 dark:text-slate-300">Trending Topics:</span>
+              {trendingTopics.map((topic) => (
+                <Link
+                  key={topic.tag}
+                  href={`/tags/${encodeURIComponent(topic.tag)}`}
+                  className="rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-700 transition-colors hover:border-blue-300 hover:text-blue-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-300 dark:hover:border-blue-800 dark:hover:text-blue-400"
+                >
+                  #{topic.name}
+                </Link>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
@@ -274,11 +283,11 @@ export default async function HomePage() {
                 <div>
                   <div className="flex items-center justify-between gap-2 text-xs text-slate-500 dark:text-slate-400">
                     <Link
-                      href={`/u/${post.authorId}`}
-                      className="flex items-center gap-2 hover:underline truncate"
+                      href={`/u/${post.authorUsername || post.authorId}`}
+                      className="flex items-center gap-2 hover:underline truncate min-w-0"
                     >
                       <Avatar name={post.authorName || "Author"} size="xs" />
-                      <span className="truncate">{post.authorName || "Anonymous"}</span>
+                      <span className="truncate max-w-[140px]">{post.authorName || "Anonymous"}</span>
                     </Link>
                     <span className="shrink-0">{calculateReadingTime(post.content)}</span>
                   </div>
@@ -306,7 +315,7 @@ export default async function HomePage() {
                       dateTime={post.publishedAt || post.createdAt}
                       className="shrink-0 text-[11px] text-slate-400"
                     >
-                      {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
+                      {formatDisplayDate(post.publishedAt || post.createdAt)}
                     </time>
                   </div>
                 </div>

@@ -16,6 +16,7 @@ import {
   type AuditLogItem,
 } from "../../lib/admin";
 import type { Post } from "../../types";
+import { formatDisplayDate } from "../../lib/time";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
 import Spinner from "../../components/ui/Spinner";
@@ -315,7 +316,7 @@ export default function AdminReviewPage() {
                     <div className="flex items-center gap-3 text-xs text-slate-500 dark:text-slate-400 pt-1">
                       <span>Submitted by <strong>{post.authorName || "Author"}</strong></span>
                       <span>•</span>
-                      <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                      <span>{formatDisplayDate(post.createdAt)}</span>
                     </div>
                   </div>
 
@@ -378,7 +379,7 @@ export default function AdminReviewPage() {
                       </p>
                     )}
                     <p className="text-[11px] text-slate-400 pt-1">
-                      Reported on {new Date(report.createdAt).toLocaleDateString()}
+                      Reported on {formatDisplayDate(report.createdAt)}
                     </p>
                   </div>
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { getPublicPosts, getPublicTags, calculateReadingTime } from "../lib/public";
-import { formatRelativeTime } from "../lib/time";
+import { formatRelativeTime, formatDisplayDate } from "../lib/time";
 import { SITE_CONFIG, getSiteUrl } from "../lib/site";
 import Card from "../components/ui/Card";
 import Badge from "../components/ui/Badge";
@@ -27,8 +27,8 @@ export async function generateMetadata({ searchParams }: ExplorePageProps): Prom
   const siteUrl = getSiteUrl();
 
   const title = resolved.tag
-    ? `#${resolved.tag} Articles — ${SITE_CONFIG.name}`
-    : `Explore Articles — ${SITE_CONFIG.name}`;
+    ? `#${resolved.tag} Articles`
+    : "Explore Articles";
   const description =
     "Discover in-depth engineering posts, tutorials, and community perspectives on Chronicle.";
   const canonicalUrl = resolved.tag
@@ -193,15 +193,15 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
                     {/* Author Byline */}
                     <div className="flex items-center justify-between text-xs text-slate-500 dark:text-slate-400">
                       <Link
-                        href={`/u/${post.authorId}`}
-                        className="flex items-center gap-2 hover:underline"
+                        href={`/u/${post.authorUsername || post.authorId}`}
+                        className="flex items-center gap-2 hover:underline min-w-0"
                       >
                         <Avatar name={post.authorName || "Author"} size="xs" />
-                        <span className="font-medium text-slate-700 dark:text-slate-300">
+                        <span className="font-medium text-slate-700 dark:text-slate-300 truncate max-w-[140px]">
                           {post.authorName || "Anonymous"}
                         </span>
                       </Link>
-                      <span>{calculateReadingTime(post.content)}</span>
+                      <span className="shrink-0">{calculateReadingTime(post.content)}</span>
                     </div>
 
                     {/* Post Content & Title */}
@@ -238,7 +238,7 @@ export default async function ExplorePage({ searchParams }: ExplorePageProps) {
                       <time
                         dateTime={displayDate}
                         className="text-[11px] text-slate-400"
-                        title={new Date(displayDate).toLocaleDateString()}
+                        title={formatDisplayDate(displayDate)}
                       >
                         {formatRelativeTime(displayDate)}
                       </time>

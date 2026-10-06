@@ -28,6 +28,15 @@ export default function Footer() {
             <Link href="/explore" className="hover:text-blue-600 dark:hover:text-blue-400">
               Explore
             </Link>
+            <Link href="/trust" className="hover:text-blue-600 dark:hover:text-blue-400">
+              Trust Standards
+            </Link>
+            <Link href="/transparency" className="hover:text-blue-600 dark:hover:text-blue-400">
+              Transparency
+            </Link>
+            <Link href="/status" className="hover:text-blue-600 dark:hover:text-blue-400">
+              Status
+            </Link>
             {isAuthenticated && (
               <Link href="/posts" className="hover:text-blue-600 dark:hover:text-blue-400">
                 My Posts

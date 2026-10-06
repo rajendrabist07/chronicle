@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { formatRelativeTime } from '../app/lib/time';
+import { formatRelativeTime, formatDisplayDate, formatMonthYear } from '../app/lib/time';
 
 describe('formatRelativeTime', () => {
     beforeEach(() => {
@@ -33,5 +33,24 @@ describe('formatRelativeTime', () => {
 
     it('handles string input as well as Date objects', () => {
         expect(formatRelativeTime('2026-10-04T11:50:00Z')).toBe('10 minutes ago');
+    });
+});
+
+describe('formatDisplayDate and formatMonthYear', () => {
+    it('formats display date deterministically in UTC', () => {
+        expect(formatDisplayDate('2026-10-06T15:30:00Z')).toBe('Oct 6, 2026');
+        expect(formatDisplayDate('2025-01-01T00:00:00Z')).toBe('Jan 1, 2025');
+    });
+
+    it('formats month and year deterministically in UTC', () => {
+        expect(formatMonthYear('2026-10-06T15:30:00Z')).toBe('October 2026');
+        expect(formatMonthYear('2025-05-15T00:00:00Z')).toBe('May 2025');
+    });
+
+    it('handles invalid or empty date inputs gracefully', () => {
+        expect(formatDisplayDate(null)).toBe('');
+        expect(formatDisplayDate(undefined)).toBe('');
+        expect(formatDisplayDate('invalid-date')).toBe('');
+        expect(formatMonthYear(null)).toBe('');
     });
 });

@@ -1,5 +1,6 @@
 import type { Post, PaginatedResponse, ApiSuccessResponse } from "../types";
 import type { Comment } from "./comments";
+import type { QuizQuestion } from "../components/reading/ComprehensionQuiz";
 
 const API_URL =
   process.env.NEXT_PUBLIC_API_URL || "https://content-platform-e3tj.onrender.com/api/v1";
@@ -18,8 +19,12 @@ export class PublicApiError extends Error {
 export interface PublicUser {
   id: string;
   name: string;
+  username?: string | null;
   bio?: string | null;
   createdAt: string;
+  badges?: string[];
+  role?: string;
+  avatarUrl?: string | null;
   _count?: {
     posts: number;
     comments: number;
@@ -173,6 +178,21 @@ export async function getPublicTags(): Promise<PublicTag[]> {
   return res.data.data || [];
 }
 
+export async function getTrendingTags(limit = 6): Promise<PublicTag[]> {
+  const res = await publicFetch<ApiSuccessResponse<PublicTag[]>>(
+    `/public/tags/trending?limit=${limit}`,
+    {
+      next: { revalidate: 300 },
+    }
+  );
+
+  if (res.status === 404 || !res.data) {
+    return [];
+  }
+
+  return res.data.data || [];
+}
+
 export async function getPublicUser(id: string): Promise<PublicUser | null> {
   const res = await publicFetch<ApiSuccessResponse<PublicUser>>(
     `/public/users/${encodeURIComponent(id)}`,
@@ -183,6 +203,22 @@ export async function getPublicUser(id: string): Promise<PublicUser | null> {
 
   if (res.status === 404 || !res.data) {
     return null;
+  }
+
+  return res.data.data;
+}
+
+export async function getPublicAuthor(identifier: string): Promise<PublicUser | null> {
+  const res = await publicFetch<ApiSuccessResponse<PublicUser>>(
+    `/public/authors/${encodeURIComponent(identifier)}`,
+    {
+      next: { revalidate: 60 },
+    }
+  );
+
+  if (res.status === 404 || !res.data) {
+    // Graceful fallback to user endpoint
+    return getPublicUser(identifier);
   }
 
   return res.data.data;
@@ -202,6 +238,104 @@ export async function getPublicSitemap(): Promise<
   }
 
   return res.data.data || [];
+}
+
+export interface PostQuiz {
+  id?: string;
+  postId?: string;
+  questions: QuizQuestion[];
+}
+
+export async function getPublicPostQuiz(slug: string): Promise<PostQuiz | null> {
+  const res = await publicFetch<ApiSuccessResponse<PostQuiz>>(
+    `/public/posts/${encodeURIComponent(slug)}/quiz`,
+    {
+      next: { revalidate: 60 },
+    }
+  );
+
+  if (res.status === 404 || !res.data) {
+    return null;
+  }
+
+  return res.data.data;
+}
+
+export interface AskArticleResponse {
+  answer: string;
+  citation?: string;
+  passage?: string;
+  confidence?: string;
+}
+
+export async function askArticleQuestion(
+  slug: string,
+  question: string
+): Promise<AskArticleResponse | null> {
+  const res = await publicFetch<ApiSuccessResponse<AskArticleResponse>>(
+    `/public/posts/${encodeURIComponent(slug)}/ask`,
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ question }),
+    }
+  );
+
+  if (res.status === 404 || !res.data) {
+    return null;
+  }
+
+  return res.data.data;
+}
+
+export interface PlatformTransparencyData {
+  totalPosts: number;
+  publishedPosts: number;
+  authorsCount: number;
+  groundedRatio?: number;
+  reviewStats?: {
+    approved: number;
+    pending: number;
+    rejected: number;
+  };
+}
+
+export async function getPlatformTransparency(): Promise<PlatformTransparencyData | null> {
+  const res = await publicFetch<ApiSuccessResponse<PlatformTransparencyData>>(
+    "/public/transparency",
+    {
+      next: { revalidate: 300 },
+    }
+  );
+
+  if (!res.ok || !res.data) {
+    return null;
+  }
+
+  return res.data.data;
+}
+
+export interface PlatformStatusData {
+  status: "operational" | "degraded" | "maintenance";
+  services?: Record<string, string>;
+  timestamp?: string;
+}
+
+export async function getPlatformStatus(): Promise<PlatformStatusData | null> {
+  const res = await publicFetch<ApiSuccessResponse<PlatformStatusData>>(
+    "/public/status",
+    {
+      next: { revalidate: 60 },
+    }
+  );
+
+  if (!res.ok || !res.data) {
+    return null;
+  }
+
+  return res.data.data;
 }
 
 /**
