@@ -35,6 +35,8 @@ import Badge from "../../components/ui/Badge";
 import Spinner from "../../components/ui/Spinner";
 import ErrorAlert from "../../components/ui/ErrorAlert";
 import { useToast } from "../../components/ui/Toast";
+import PostStatusTimeline from "../../components/trust/PostStatusTimeline";
+import { approvePost } from "../../lib/admin";
 import {
   ArrowLeft,
   Calendar,
@@ -44,6 +46,7 @@ import {
   Send,
   User,
   ExternalLink,
+  CheckCircle,
 } from "lucide-react";
 
 export default function PostDetailPage() {
@@ -173,6 +176,25 @@ export default function PostDetailPage() {
       const updated = await publishPost(post.id, token);
       setPost(updated);
       success("Post published successfully!");
+    } catch (err: any) {
+      const msg = describeApiError(err);
+      setActionError(msg);
+      toastError(msg);
+    } finally {
+      setIsPublishing(false);
+    }
+  }
+
+  async function handleApprove() {
+    const token = getAccessToken();
+    if (!token || !post) return;
+
+    setIsPublishing(true);
+    setActionError(null);
+    try {
+      const updated = await approvePost(post.id, token);
+      setPost(updated);
+      success("Article approved and published live!");
     } catch (err: any) {
       const msg = describeApiError(err);
       setActionError(msg);
@@ -368,6 +390,17 @@ export default function PostDetailPage() {
                       Publish
                     </Button>
                   )}
+                  {post.status === "PENDING_REVIEW" && isPrivileged && (
+                    <Button
+                      size="sm"
+                      onClick={handleApprove}
+                      loading={isPublishing}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                      <CheckCircle className="mr-1.5 h-3.5 w-3.5" />
+                      Approve & Publish Live
+                    </Button>
+                  )}
                   <Button
                     variant="secondary"
                     size="sm"
@@ -417,6 +450,34 @@ export default function PostDetailPage() {
                 ))}
               </div>
             )}
+
+            {/* Review Status Guidance Banner if Pending */}
+            {post.status === "PENDING_REVIEW" && (
+              <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900/60 dark:bg-amber-950/40 dark:text-amber-200 flex items-start gap-3">
+                <Clock className="h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-semibold text-amber-800 dark:text-amber-300">Article Under Editorial Review</p>
+                  <p className="mt-0.5 leading-relaxed">
+                    This article has been submitted to Chronicle&apos;s Trust Layer. Reviewers and automated quality checks ensure technical rigor before the story is published live to the global community.
+                    {isPrivileged && (
+                      <span className="block mt-1 font-semibold text-emerald-700 dark:text-emerald-300">
+                        ⚡ As an Admin, you can approve and publish this story immediately using the button above or from the <Link href="/admin/review" className="underline">Trust & Moderation Desk</Link>.
+                      </span>
+                    )}
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Post Status Lifecycle Timeline */}
+            <div className="mt-6">
+              <PostStatusTimeline
+                status={post.status as any}
+                createdAt={post.createdAt}
+                publishedAt={post.publishedAt}
+                rejectionReason={(post as any).rejectionReason}
+              />
+            </div>
 
             {/* Rendered Markdown Body */}
             <div className="prose prose-slate mt-6 max-w-none dark:prose-invert prose-headings:font-bold prose-pre:bg-slate-900 text-slate-800 dark:text-slate-200">

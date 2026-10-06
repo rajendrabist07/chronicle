@@ -13,17 +13,20 @@ export interface AuthResponse {
     refreshToken: string;
 }
 
+export type PostStatus = 'DRAFT' | 'PENDING_REVIEW' | 'PUBLISHED' | 'REJECTED' | 'ARCHIVED';
+
 export interface Post {
     id: string;
     title: string;
     slug: string;
     content: string;
-    status: 'DRAFT' | 'PUBLISHED' | 'ARCHIVED';
+    status: PostStatus;
     publishedAt: string | null;
     authorId: string;
     authorName: string;
     createdAt: string;
     tags?: { id: string; name: string }[];
+    rejectionReason?: string | null;
 }
 
 export interface ApiSuccessResponse<T> {

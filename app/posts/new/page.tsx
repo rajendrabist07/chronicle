@@ -36,7 +36,7 @@ function NewPostContent() {
     Partial<Record<keyof CreatePostInput, string>>
   >({});
   const [serverError, setServerError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submittingAction, setSubmittingAction] = useState<"DRAFT" | "PUBLISHED" | null>(null);
 
   function handleChange(field: keyof CreatePostInput, value: string) {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -69,10 +69,11 @@ function NewPostContent() {
   }
 
   async function handleSubmit(
-    e: React.FormEvent,
+    e: React.MouseEvent<HTMLButtonElement>,
     submitStatus: "DRAFT" | "PUBLISHED"
   ) {
     e.preventDefault();
+    if (submittingAction !== null) return;
     setServerError(null);
 
     const payload = { ...formData, status: submitStatus };
@@ -93,7 +94,7 @@ function NewPostContent() {
       return;
     }
 
-    setIsSubmitting(true);
+    setSubmittingAction(submitStatus);
     try {
       const post = await createPost(result.data, token);
 
@@ -119,14 +120,20 @@ function NewPostContent() {
         }
       }
 
-      success(submitStatus === "PUBLISHED" ? "Article published!" : "Draft saved!");
+      if (post.status === "PENDING_REVIEW") {
+        success("Article submitted for review! As a new author, your post will be reviewed by editors before appearing publicly.");
+      } else if (post.status === "PUBLISHED") {
+        success("Article published live!");
+      } else {
+        success("Draft saved successfully!");
+      }
       router.push(`/posts/${post.id}`);
     } catch (err: any) {
       const msg = describeApiError(err);
       setServerError(msg);
       toastError(msg);
     } finally {
-      setIsSubmitting(false);
+      setSubmittingAction(null);
     }
   }
 
@@ -190,8 +197,8 @@ function NewPostContent() {
             <Button
               type="button"
               variant="secondary"
-              loading={isSubmitting}
-              disabled={isSubmitting}
+              loading={submittingAction === "DRAFT"}
+              disabled={submittingAction !== null}
               onClick={(e) => handleSubmit(e, "DRAFT")}
               className="flex-1"
             >
@@ -199,8 +206,8 @@ function NewPostContent() {
             </Button>
             <Button
               type="button"
-              loading={isSubmitting}
-              disabled={isSubmitting}
+              loading={submittingAction === "PUBLISHED"}
+              disabled={submittingAction !== null}
               onClick={(e) => handleSubmit(e, "PUBLISHED")}
               className="flex-1"
             >
